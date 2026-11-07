@@ -11,6 +11,9 @@
     "android": "com.metrolist.music",
     "fallback": "https://music.youtube.com/"
   },
+  "collab": {
+    "url": "https://ghir-a9ra-barka-collab.ghir-a9ra-barka.workers.dev"
+  },
   "pomodoro": {
     "focus": 25,
     "short": 5,
