@@ -648,7 +648,9 @@ export async function build({ quiet = false, dev = false } = {}) {
 
   // ── Output ───────────────────────────────────────────────────────────
   const orderedMatieres = [...matieres.values()].sort((a, b) => (a.order - b.order) || natural(a.name, b.name));
+  const build = await codeVersion();
   const vault = {
+    build,
     site: {
       ...config,
       wallpaper: config.wallpaper && !/^(https?:)?\/\//.test(config.wallpaper) ? fileUrl(config.wallpaper) : config.wallpaper ?? null,
@@ -668,6 +670,7 @@ export async function build({ quiet = false, dev = false } = {}) {
   // Scripts and styles are copied fresh, so a file removed from src/ doesn't linger in dist/.
   for (const dir of ['js', 'css']) await fs.rm(path.join(DIST, dir), { recursive: true, force: true });
   await fs.cp(SRC, DIST, { recursive: true });
+  await stampVersion(build);
   await fs.rm(path.join(DIST, 'data'), { recursive: true, force: true });
   await fs.mkdir(path.join(DIST, 'data', 'html'), { recursive: true });
   await fs.writeFile(path.join(DIST, 'data', 'vault.json'), JSON.stringify(vault));
@@ -684,7 +687,7 @@ export async function build({ quiet = false, dev = false } = {}) {
     if (font.endsWith('.woff2')) await copyIfChanged(path.join(katexDist, 'fonts', font), path.join(DIST, 'vendor', 'katex', 'fonts', font));
   }
 
-  await writeServiceWorker([...htmlById.keys()]);
+  await writeServiceWorker([...htmlById.keys()], build);
 
   const published = [...items.filter((i) => i.kind !== 'note').map((i) => i.rel), ...assets.map((a) => a.rel)];
   await Promise.all(published.map((rel) => copyIfChanged(path.join(CONTENT, rel), path.join(DIST, 'files', rel))));
@@ -698,15 +701,46 @@ export async function build({ quiet = false, dev = false } = {}) {
   return stats;
 }
 
+// Version of the site's code (src/ and this script). Every script and stylesheet is
+// requested as file.js?v=<version>, so a browser can never run old and new files
+// together after an update (GitHub Pages lets browsers reuse files for 10 minutes),
+// and vault.json carries the same version so the app can tell when its code and its
+// data come from two different updates.
+async function codeVersion() {
+  const hash = createHash('sha256');
+  for (const f of (await walk(SRC)).sort()) hash.update(f).update(await fs.readFile(path.join(SRC, f)));
+  hash.update(await fs.readFile(fileURLToPath(import.meta.url)));
+  return hash.digest('hex').slice(0, 10);
+}
+
+async function stampVersion(version) {
+  const v = `?v=${version}`;
+  // import … from './x.js' · export … from './x.js' · import './x.js' · import('./x.js')
+  const spec = /(\bfrom\s*|\bimport\s*\(?\s*)(['"])(\.{1,2}\/[^'"?]+\.js)\2/g;
+  for (const f of await walk(path.join(DIST, 'js'))) {
+    const file = path.join(DIST, 'js', f);
+    const js = await fs.readFile(file, 'utf8');
+    await fs.writeFile(file, js.replace(spec, (all, pre, q, url) => `${pre}${q}${url}${v}${q}`));
+  }
+  const index = path.join(DIST, 'index.html');
+  let html = await fs.readFile(index, 'utf8');
+  for (const ref of ['src="js/app.js"', 'href="css/style.css"']) {
+    if (!html.includes(ref)) throw new Error(`index.html: ${ref} introuvable (versionnage des fichiers)`);
+    html = html.replace(ref, ref.replace(/"$/, `${v}"`));
+  }
+  await fs.writeFile(index, html);
+}
+
 // dist/sw.js: the offline copy (src/sw.js) with the list of files to keep and a version
 // that changes only when one of them does.
-async function writeServiceWorker(noteIds) {
+async function writeServiceWorker(noteIds, version) {
   const srcFiles = (await walk(SRC)).filter((f) => f !== 'sw.js');
   const vendor = (await walk(path.join(DIST, 'vendor'))).map((f) => `vendor/${f}`);
   const list = ['./', ...srcFiles, 'data/vault.json', 'data/search.json', ...noteIds.map((id) => `data/html/${id}.html`), ...vendor];
   const hash = createHash('sha256');
   for (const f of list.slice(1)) hash.update(f).update(await fs.readFile(path.join(DIST, f)));
-  const urls = list.map((f) => f.split('/').map(encodeURIComponent).join('/').replace(/^\.%2F$|^\.$/, './'));
+  // Scripts and styles under the same versioned address the page asks for.
+  const urls = list.map((f) => f.split('/').map(encodeURIComponent).join('/').replace(/^\.%2F$|^\.$/, './') + (/^(js\/.*\.js|css\/.*\.css)$/.test(f) ? `?v=${version}` : ''));
   const template = await fs.readFile(path.join(SRC, 'sw.js'), 'utf8');
   await fs.writeFile(path.join(DIST, 'sw.js'), template
     .replace("'__VERSION__'", JSON.stringify(hash.digest('hex').slice(0, 12)))

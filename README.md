@@ -1,6 +1,6 @@
 # ghir-a9ra-barka
 
-A cozy study site for the class: every matière with its cours, TD, TP, corrections and résumés. It works like Obsidian (graph view, canvas boards, wikilinks) and has a study room with a pomodoro timer and ambient sounds. Anyone in the class can add notes and links to any page, live for everyone (see [Ajouts de la classe](#ajouts-de-la-classe-live)). The look borrows from riced Linux desktops (rofi/waybar style, Catppuccin and friends).
+A study site for the class: every matière with its cours, TD, TP, corrections and résumés. It works like Obsidian (graph view, canvas boards, wikilinks) and has a study room with a pomodoro timer and ambient sounds. Anyone in the class can add notes and links to any page, live for everyone (see [Ajouts de la classe](#ajouts-de-la-classe-live)). The look borrows from riced Linux desktops (rofi/waybar style, Catppuccin and friends).
 
 **The `content/` folder is an Obsidian vault.** You write notes and drop PDFs in Obsidian, then rebuild, and the site shows them.
 
@@ -80,13 +80,13 @@ Each matière gets an auto-generated **carte** (canvas) laid out by type. Any `.
 - `theme` / `accent`: defaults for first-time visitors (`mocha`, `macchiato`, `latte`, `rose-pine`, `dawn`, `tokyo-night`, `gruvbox`, `nord`, `everforest`)
 - `wallpaper`: a path inside `content/` (e.g. `_assets/wall.jpg`) or a URL
 - `pomodoro`: default durations in minutes
-- `musicApp`: the headphones icon in the top bar (and `m`), the only music on the site. Remove the key to hide it.
+- `musicApp`: turns on the **chansons** panel (headphones icon in the top bar, `c`; `m` plays / pauses). Remove the key to hide it.
   ```json
   "musicApp": { "name": "Metrolist", "url": "http://localhost:4747", "android": "com.metrolist.music", "fallback": "https://music.youtube.com/" }
   ```
-  - On a computer it opens Metrolist Web (`url`), which runs on that computer: `~/Projects/metrolist/scripts/install-desktop.sh --service` starts it at every login so the icon always works.
-  - On Android it opens the [Metrolist](https://github.com/MetrolistGroup/Metrolist) app (`android` is its package name), or `fallback` if the app isn't installed.
-  - On iPhone and iPad it opens `fallback` (Metrolist is Android only).
+  Search any song and it plays right here, on the site, while you keep studying: it carries on from page to page (mini player in the corner), and similar songs follow. The study room has the same panel; in the launcher (`ctrl k`), type a song and pick « Jouer … ».
+  - Search and audio come from [Metrolist Web](https://github.com/MetrolistGroup/Metrolist) (`url`), a small app in `~/Projects/metrolist` that must run on the same computer (a website alone can't reach YouTube Music). `~/Projects/metrolist/scripts/install-desktop.sh --service` starts it at every login. Chrome may ask once whether the site may access apps on your device: allow it.
+  - On a phone there is no Metrolist Web, so the panel says so and offers to open the Metrolist app on Android (`android` is its package name) or `fallback` on iPhone.
 - `collab`: `{ "url": "https://…workers.dev" }`, the address of the additions server (next section). Without it, the site has no additions.
 
 The ambient sounds of the study room (rain, fire, waves, wind, brown noise) are generated in the browser, so there are no audio files to host.
@@ -158,7 +158,7 @@ The additions (and only them) live on the server in `worker/`. Everything else, 
 | `Ctrl B` | toggle the sidebar |
 | `g` / `e` / `h` | graph / study room / home |
 | `p` | start or pause the pomodoro |
-| `m` | open Metrolist |
+| `c` / `m` | chansons panel / play or pause the song |
 | `Ctrl Enter` | send an addition (`Esc` cancels) |
 
 ## Project layout
@@ -170,7 +170,7 @@ src/                the site itself (vanilla JS modules, no framework)
   js/views/         home, matière, note, addition, graph, canvas, study room
   js/graph.js       force-directed graph · js/jcanvas.js  JSON Canvas renderer
   js/collab.js      additions: cache, outbox, live connection · js/contribs.js  their UI
-  js/audio.js       ambient sound synth
+  js/songs.js       chansons panel + mini player (through Metrolist Web) · js/audio.js  ambient sound synth
   sw.js             offline copy of the site (the build fills in the file list)
   css/style.css     everything visual
 worker/             the additions server (Cloudflare Worker + Durable Object) and its tests

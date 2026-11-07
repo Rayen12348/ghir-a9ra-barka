@@ -2,7 +2,7 @@ import { vault, items, matieres, typeOf, itemIcon, matiereEmoji, cssColor, recen
 import { THEMES, ACCENTS, applyTheme, current } from './themes.js';
 import { pomodoro } from './pomodoro.js';
 import { ambience, SOUNDS } from './audio.js';
-import { musicApp, openMusicApp } from './bar.js';
+import { songs } from './songs.js';
 import { collab, contribTitle } from './collab.js';
 import { icon } from './icons.js';
 import { esc, fuzzy, highlight, fold, go, store } from './util.js';
@@ -67,7 +67,11 @@ function actionEntries() {
     a(pomodoro.running ? 'Pomodoro : pause' : 'Pomodoro : démarrer', 'timer', () => pomodoro.toggle(), 'timer focus', 'p'),
     a('Pomodoro : réinitialiser', 'reset', () => pomodoro.reset(), 'timer'),
     a('Pomodoro : passer à la suite', 'skip', () => pomodoro.skip(), 'timer'),
-    ...(musicApp() ? [a(`Ouvrir ${musicApp().name ?? 'Metrolist'}`, 'headphones', openMusicApp, 'musique chanson metrolist youtube music', 'm')] : []),
+    ...(songs.enabled() ? [a('Chansons : chercher une chanson', 'headphones', () => hooks.openSongs?.(), 'chanson musique youtube music metrolist chercher jouer', 'c')] : []),
+    ...(songs.active && songs.current ? [
+      a(songs.playing ? 'Chanson : pause' : 'Chanson : lecture', 'headphones', () => songs.toggle(), 'musique play pause', 'm'),
+      a('Chanson : suivante', 'skip', () => songs.next(), 'musique next suivant'),
+    ] : []),
     ...SOUNDS.map((s) => a(`Ambiance : ${s.label}${ambience.isOn(s.id) ? ' (couper)' : ''}`, s.icon, () => ambience.toggle(s.id), 'son bruit ambiance')),
     a('Ambiance : tout couper', 'mute', () => ambience.stopAll(), 'silence son'),
     a('Note au hasard', 'dice', () => {
@@ -110,6 +114,10 @@ function compute() {
       .map((e) => ({ ...e, score: e.match + (kindBoost[e.kind] ?? 0) + (fuzzy(q, e.label) > 0 ? 30 : 0) }))
       .sort((x, y) => y.score - x.score)
       .slice(0, 60);
+    // Type anything and press Enter: plays it (first YouTube Music result).
+    if (q.length >= 2 && songs.enabled() && (mode === 'drun' || mode === 'run')) {
+      entries.push({ kind: 'action', group: 'chansons', label: `Jouer « ${q} »`, sub: 'YouTube Music', icon: icon('headphones'), color: 'var(--accent)', run: () => songs.playQuery(q) });
+    }
     if (q.length >= 3 && (mode === 'drun' || mode === 'notes')) contentSearch(q);
   }
   sel = 0;

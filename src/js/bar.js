@@ -3,6 +3,7 @@ import { THEMES, ACCENTS, applyTheme, current, themeEvents } from './themes.js';
 import { mountPill, mountTimer } from './pomodoro.js';
 import { icon } from './icons.js';
 import { collab } from './collab.js';
+import { songs, mountSongs } from './songs.js';
 import { mountPresence, presencePanel } from './contribs.js';
 import { esc, store, clamp } from './util.js';
 
@@ -56,27 +57,26 @@ function pomoPanel(el, keep) {
   el.querySelector('a').addEventListener('click', closePopover);
 }
 
-// The only music left on the site: a shortcut to Metrolist (site.config.json → musicApp).
-//  - computer: Metrolist Web running on that computer (`url`);
-//  - Android: the Metrolist app itself (`android` = its package), or `fallback` if it
-//    isn't installed. The link targets the app's /search route with no query, which
-//    just opens the app (see Metrolist's MainActivity.handleDeepLinkIntent);
-//  - iPhone / iPad: `fallback` (Metrolist is Android only).
-const UA = navigator.userAgent;
-const IS_ANDROID = /Android/i.test(UA);
-const IS_IOS = /iPhone|iPad|iPod/i.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
-export const musicApp = () => (vault.site?.musicApp?.url ? vault.site.musicApp : null);
-export function musicHref() {
-  const app = musicApp();
-  if (!app) return null;
-  const fallback = app.fallback || 'https://music.youtube.com/';
-  if (IS_ANDROID && app.android) return `intent://music.youtube.com/search#Intent;scheme=https;package=${app.android};S.browser_fallback_url=${encodeURIComponent(fallback)};end`;
-  if (IS_ANDROID || IS_IOS) return fallback;
-  return app.url;
+// Music: the "chansons" panel plays any song right here (through Metrolist Web).
+function songsPanel(el, keep) {
+  el.innerHTML = `<div class="pop-title">${icon('headphones')} chansons <span class="pop-sub">${esc(vault.site.musicApp?.name ?? 'Metrolist')}</span></div><div class="songs-host"></div>`;
+  keep(mountSongs(el.querySelector('.songs-host'), { autofocus: true }));
 }
-export function openMusicApp() {
-  const href = musicHref();
-  if (href) window.open(href, '_blank', 'noopener');
+
+function mountSongsButton(el) {
+  const update = () => {
+    const on = songs.active && songs.playing;
+    el.classList.toggle('playing', on);
+    el.innerHTML = on ? '<span class="eq"><i></i><i></i><i></i><i></i></span>' : icon('headphones');
+  };
+  update();
+  songs.events.on(update);
+}
+
+// Opens the "chansons" panel (from the launcher, the mini player or the c key).
+export function openSongs() {
+  const b = document.querySelector('#bar .songs-btn');
+  if (b && !b.classList.contains('open')) b.click();
 }
 
 function themePanel(el, keep) {
@@ -130,12 +130,13 @@ export function mountBar(el, { onMenu, onSearch }) {
       <button class="mod" data-search title="Rechercher (Ctrl K)">${icon('search')}<span class="hide-sm">lancer</span><kbd class="hide-sm">ctrl k</kbd></button>
       ${collab.enabled ? '<button class="mod live-pill" data-pop="live"></button>' : ''}
       <button class="mod pomo-pill" data-pop="pomo"></button>
-      ${musicApp() ? `<a class="mod icon-mod" href="${esc(musicHref())}" target="_blank" rel="noopener" title="Ouvrir ${esc(musicApp().name ?? 'Metrolist')} (m)">${icon('headphones')}</a>` : ''}
+      ${songs.enabled() ? '<button class="mod icon-mod songs-btn" data-pop="songs" title="Chansons : cherche et joue ce que tu veux, ici (c)"></button>' : ''}
       <button class="mod icon-mod" data-pop="theme" title="Thème">${icon('palette')}</button>
     </div>`;
 
   mountPill(el.querySelector('.pomo-pill'));
   if (collab.enabled) mountPresence(el.querySelector('.live-pill'));
+  if (songs.enabled()) mountSongsButton(el.querySelector('.songs-btn'));
 
   const clock = el.querySelector('.mod-clock');
   const tick = () => {
@@ -145,7 +146,7 @@ export function mountBar(el, { onMenu, onSearch }) {
   tick();
   setInterval(tick, 10000);
 
-  const panels = { pomo: [pomoPanel, 'pop-pomo'], live: [presencePanel, 'pop-live'], theme: [themePanel, 'pop-theme'] };
+  const panels = { pomo: [pomoPanel, 'pop-pomo'], live: [presencePanel, 'pop-live'], songs: [songsPanel, 'pop-songs'], theme: [themePanel, 'pop-theme'] };
   el.addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (!b) return;

@@ -55,18 +55,35 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
-// The page and the hash routes (#/n/…) all live in index.html.
-const keyOf = (req) => (req.mode === 'navigate' ? new URL('./', self.location).href : req.url.split('?')[0]);
+// Scripts and styles carry their version (file.js?v=…): they are kept and looked up
+// with it, so this copy can never hand out a file from another update. Everything
+// else is kept under its address alone. The page and its hash routes (#/n/…) all
+// live in index.html.
+const versioned = (url) => url.searchParams.has('v');
+function keyOf(req) {
+  if (req.mode === 'navigate') return new URL('./', self.location).href;
+  const url = new URL(req.url);
+  return versioned(url) ? url.href : url.origin + url.pathname;
+}
+
+// Unversioned files (the page, the data, the notes) are checked with the server on
+// every load (a cheap "not modified" when nothing changed), never taken as-is from
+// the browser's cache, which may still hold the previous update for 10 minutes.
+function fresh(req) {
+  if (versioned(new URL(req.url))) return req;
+  if (req.mode === 'navigate') return new Request(req.url, { cache: 'no-cache', credentials: 'same-origin', redirect: 'manual' });
+  return new Request(req, { cache: 'no-cache' });
+}
 
 async function networkFirst(event, req) {
   const cache = await caches.open(SHELL);
   const key = keyOf(req);
-  const network = fetch(req).then((res) => {
+  const network = fetch(fresh(req)).then((res) => {
     if (res.ok && res.type === 'basic') event.waitUntil(cache.put(key, res.clone()));
     return res;
   });
   network.catch(() => {});
-  const cached = () => cache.match(key, { ignoreSearch: true }).then((hit) => hit ?? (req.mode === 'navigate' ? cache.match('index.html') : null));
+  const cached = () => cache.match(key).then((hit) => hit ?? (req.mode === 'navigate' ? cache.match('index.html') : null));
   // Slow network: answer from the copy after TIMEOUT (the fetch still updates it).
   const late = new Promise((resolve) => setTimeout(() => cached().then((hit) => hit && resolve(hit)), TIMEOUT));
   try {

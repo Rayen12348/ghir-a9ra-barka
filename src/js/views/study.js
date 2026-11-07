@@ -1,6 +1,7 @@
 import { matieres, matiereEmoji } from '../data.js';
 import { mountTimer, mountSettings, stats, pomodoro } from '../pomodoro.js';
 import { ambience, SOUNDS } from '../audio.js';
+import { songs, mountSongs } from '../songs.js';
 import { color } from '../themes.js';
 import { icon } from '../icons.js';
 import { esc, store, today, reducedMotion } from '../util.js';
@@ -167,6 +168,7 @@ export function renderStudy(view) {
       <div class="timer-host"></div>
       <p class="quote muted">${QUOTES[Math.floor(Math.random() * QUOTES.length)]}</p>
     </section>
+    ${songs.enabled() ? `<section class="card"><div class="panel-title">${icon('headphones')} chansons</div><div class="songs-host"></div></section>` : ''}
     <section class="card"><div class="panel-title">${icon('waves')} ambiance</div><div class="mixer"></div></section>
     <section class="card"><div class="panel-title">${icon('list')} pour cette session</div><div class="todo-host"></div></section>
     <section class="card"><div class="panel-title">${icon('sparkles')} statistiques</div><div class="stats-host"></div></section>
@@ -176,6 +178,7 @@ export function renderStudy(view) {
     scene(view.querySelector('.study-bg')),
     mountTimer(view.querySelector('.timer-host')),
     mountMixer(view.querySelector('.mixer')),
+    songs.enabled() ? mountSongs(view.querySelector('.songs-host')) : null,
     mountStats(view.querySelector('.stats-host')),
   ];
   mountTodos(view.querySelector('.todo-host'));
