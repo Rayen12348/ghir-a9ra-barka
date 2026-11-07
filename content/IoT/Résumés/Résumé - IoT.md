@@ -514,7 +514,7 @@ Base **NoSQL** gérée par AWS, adaptée à l'IoT.
 
 ### Le traitement par lots (batch)
 
-- **Apache Spark** : moteur unifié, jusqu'à **100 fois plus rapide que MapReduce** (traitements en mémoire) ; en Java, Scala, Python, R et SQL. Lien avec le cours de [[Big Data]].
+- **Apache Spark** : moteur unifié, jusqu'à **100 fois plus rapide que MapReduce** (traitements en mémoire) ; en Java, Scala, Python, R et SQL. Lien avec le cours de Big Data.
 - **YARN** : gestionnaire de cluster qui attribue les ressources à Spark.
 - **Stockage** : HDFS, HBase, DynamoDB, S3, Azure Blob.
 - **Reporting** : Tableau, Power BI, Amazon QuickSight.
@@ -543,7 +543,7 @@ Les machines de l'usine passent par une conversion de protocole (Lambda), puis p
 
 ## Module 7 — IA et Machine Learning pour l'AIoT
 
-*PDF p. 76–84 · en pratique : [[TP 11 - TinyML, reconnaissance de gestes|TP 11]] · voir aussi : [[Résumé - Chapitre 1 - Introduction et démarche expérimentale|cours de Machine Learning]]*
+*PDF p. 76–84 · en pratique : [[TP 11 - TinyML, reconnaissance de gestes|TP 11]] · voir aussi : cours de Machine Learning*
 
 ### IA, Machine Learning, modèle
 
@@ -924,7 +924,7 @@ Autres usages : industrie (identité des machines, ordres de travail numériques
 
 ## Module 13 — Sécurité avancée et conformité
 
-*PDF p. 128–137 · en pratique : [[TP 6 - Sécuriser MQTT (TLS, mots de passe, ACL)|TP 6]] · voir aussi : [[Résumé - Sécurité informatique]]*
+*PDF p. 128–137 · en pratique : [[TP 6 - Sécuriser MQTT (TLS, mots de passe, ACL)|TP 6]] · voir aussi : Résumé - Sécurité informatique*
 
 ### Zero Trust : « Never trust, always verify »
 

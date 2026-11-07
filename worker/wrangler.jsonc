@@ -1,0 +1,21 @@
+// Cloudflare Worker for ghir-a9ra-barka "ajouts de la classe".
+// Deploy once with `npx wrangler login && npx wrangler deploy` (free plan is enough).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ghir-a9ra-barka-collab",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-01",
+  "durable_objects": {
+    "bindings": [{ "name": "CLASS", "class_name": "ClassRoom" }]
+  },
+  // SQLite-backed Durable Objects are the ones available on the free plan.
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["ClassRoom"] }],
+  "vars": {
+    // Sites allowed to talk to this server (comma separated). "http://localhost" covers every local port.
+    "ALLOWED_ORIGINS": "https://rayen12348.github.io,http://localhost"
+  },
+  "observability": { "enabled": true }
+  // Optional secrets (npx wrangler secret put …):
+  //   CLASS_CODE  a code students type once before adding anything
+  //   ADMIN_KEY   lets you delete any addition and download a backup (/api/export)
+}

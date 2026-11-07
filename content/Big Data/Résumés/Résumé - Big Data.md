@@ -47,4 +47,4 @@ Clé-valeur (Redis) · Documents (MongoDB) · Colonnes (Cassandra, HBase) · Gra
 > [!tip] Les formats de fichiers
 > CSV et JSON pour échanger ; **Parquet** (stockage en colonnes, compressé) pour analyser vite.
 
-Cours : [[Chapitre 1 - Hadoop, MapReduce et Spark]] · TP : [[TP 1 - Word count avec PySpark]] · même UE : [[Résumé - Cloud et virtualisation]].
+Cours : [[Chapitre 1 - Hadoop, MapReduce et Spark]] · TP : [[TP 1 - Word count avec PySpark]] · même UE : Résumé - Cloud et virtualisation.

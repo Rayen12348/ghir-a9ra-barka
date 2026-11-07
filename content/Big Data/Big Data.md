@@ -11,4 +11,4 @@ ordre: 7
 |---|---|---|---|---|---|---|---|
 | Cloud & Big Data (`573103510`) | 1 | 2 | Mixte | 10,5 h | — | 21 h | 31,5 h |
 
-Même UE que [[Virtualisation et Cloud]].
+Même UE que Virtualisation et Cloud.

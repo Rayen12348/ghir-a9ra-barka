@@ -195,7 +195,7 @@ public class ClientUDP {
 > [!exemple] Le thermomètre
 > Un thermomètre envoie toutes les 5 secondes la température de l'air à un afficheur distant. Ce n'est pas grave de perdre une mesure de temps en temps, ni d'envoyer des mesures quand l'afficheur est absent : **UDP** convient.
 
-Voir aussi : des objets qui envoient des mesures en continu, c'est le quotidien de l'[[IoT]].
+Voir aussi : des objets qui envoient des mesures en continu, c'est le quotidien de l'IoT.
 
 ## Récapitulatif du chapitre 1
 

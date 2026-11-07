@@ -11,7 +11,7 @@ tags: [entreprenariat, business-model, lean-startup]
 
 On parle d'**intrapreneuriat** quand on porte un projet innovant à l'intérieur d'une entreprise existante.
 
-Une **startup** est une jeune entreprise qui cherche un modèle économique **reproductible et capable de grandir vite**, souvent grâce à la technologie. Beaucoup de projets de [[PFE]] peuvent devenir le point de départ d'une startup.
+Une **startup** est une jeune entreprise qui cherche un modèle économique **reproductible et capable de grandir vite**, souvent grâce à la technologie. Beaucoup de projets de PFE peuvent devenir le point de départ d'une startup.
 
 ## Une idée n'est pas une opportunité
 

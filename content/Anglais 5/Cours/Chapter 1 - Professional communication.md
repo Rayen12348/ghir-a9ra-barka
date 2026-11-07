@@ -66,7 +66,7 @@ The classic structure: tell them what you'll tell them → tell them → tell th
 | *Where do you see yourself in five years?* | Show ambition linked to the role. |
 | *Do you have any questions for us?* | Always ask one: *What does a typical day look like for an intern?* |
 
-The French version of this preparation is in [[Chapitre 1 - Préparer son insertion professionnelle]].
+The French version of this preparation is in Chapitre 1 - Préparer son insertion professionnelle.
 
 ## 5. Tech vocabulary
 

@@ -5,6 +5,8 @@ import { icon } from '../icons.js';
 import { esc, store, fmtDate } from '../util.js';
 import { enhance } from '../enhance.js';
 import { notFound } from './notfound.js';
+import { collab } from '../collab.js';
+import { mountThread } from '../contribs.js';
 
 export function docCard(it) {
   const corr = it.corrections.map((id) => items.get(id)).filter(Boolean);
@@ -45,14 +47,31 @@ export function renderMatiere(view, { params: [id], query }) {
       </div>
       <div class="m-head-side">
         <div class="m-progress"><div class="progress"><span style="width:${list.length ? (done / list.length) * 100 : 0}%"></span></div><small>${done}/${list.length} vus${pomos ? ` · ${pomos} pomodoro${pomos > 1 ? 's' : ''}` : ''}</small></div>
+        ${collab.enabled ? '<small class="m-live muted"></small>' : ''}
       </div>
     </header>
     <nav class="tabs" role="tablist">${tabs.map((t) => `<a class="tab ${t.id === tab ? 'active' : ''}" role="tab" href="#/m/${m.id}?tab=${encodeURIComponent(t.id)}">${icon(t.icon)} ${esc(t.label)}</a>`).join('')}</nav>
     <div class="m-body"></div>
   </div>`;
   const body = view.querySelector('.m-body');
+  const live = view.querySelector('.m-live');
+  const paintLive = () => {
+    if (!live) return;
+    const here = collab.online.pages?.[m.id] ?? 0;
+    const adds = collab.count(`m:${m.id}`) + itemsOf(m).reduce((n, it) => n + collab.count(it.id), 0);
+    live.innerHTML = [collab.state === 'online' && here ? `<span class="live-dot"></span>${here} ici` : '', adds ? `${adds} ajout${adds > 1 ? 's' : ''} de la classe` : ''].filter(Boolean).join(' · ');
+  };
+  paintLive();
+  const offLive = [collab.status.on(paintLive), collab.events.on(paintLive)];
+  const stopLive = () => offLive.forEach((f) => f());
 
-  if (tab !== 'liste') return mountCanvas(body, canvases.get(tab));
+  if (tab !== 'liste') {
+    const off = mountCanvas(body, canvases.get(tab), { matiere: m.id });
+    return () => {
+      off();
+      stopLive();
+    };
+  }
 
   body.classList.add('m-scroll');
   body.innerHTML = `<div class="page">
@@ -63,7 +82,9 @@ export function renderMatiere(view, { params: [id], query }) {
       return `<section><h2 class="section-h"><span class="prompt">❯</span> ${esc(t.plural.toLowerCase())} <span class="count">${docs.length}</span></h2>
         <div class="doc-grid">${docs.map(docCard).join('')}</div></section>`;
     }).join('') || '<p class="empty">Rien ici pour le moment.</p>'}
+    <section class="thread-host"></section>
   </div>`;
+  const offThread = mountThread(body.querySelector('.thread-host'), { parent: `m:${m.id}`, matiere: m.id, label: m.name });
   enhance(body, { depth: 1 });
   const onClick = (e) => {
     const b = e.target.closest('[data-done]');
@@ -74,4 +95,8 @@ export function renderMatiere(view, { params: [id], query }) {
     b.querySelector('span').textContent = progress.has(b.dataset.done) ? 'vu' : 'à voir';
   };
   body.addEventListener('click', onClick);
+  return () => {
+    offThread();
+    stopLive();
+  };
 }

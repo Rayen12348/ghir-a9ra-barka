@@ -20,4 +20,4 @@ ordre: 1
 
 Chaque séance a son support (PDF) dans **Cours** et sa fiche détaillée dans **Résumés**.
 
-Même UE que [[Développement Mobile]].
+Même UE que Développement Mobile.

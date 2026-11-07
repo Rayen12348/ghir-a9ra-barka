@@ -135,4 +135,4 @@ La plupart des applications réparties sont de type **client/serveur** : le clie
 > 4. Un comportement défini par un contrat, fourni par un composant et utilisé par un autre sur la seule base de ce contrat. Points de vue **opérationnel** (opérations, structures de données) et **contractuel** (contrat client / fournisseur).
 > 5. Au choix : OS différents, mémoires séparées, problèmes de transport (réseau, pare-feu), service à localiser, langages différents.
 
-Voir aussi : les notions de service et de contrat sont reprises en [[SOA et services Web]].
+Voir aussi : les notions de service et de contrat sont reprises en SOA et services Web.

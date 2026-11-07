@@ -11,6 +11,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { Marked } from 'marked';
 import { markedHighlight } from 'marked-highlight';
 import markedKatex from 'marked-katex-extension';
@@ -198,9 +199,10 @@ async function removeStale(dir, keep, base = dir) {
   }
 }
 
-export async function build({ quiet = false } = {}) {
+export async function build({ quiet = false, dev = false } = {}) {
   const t0 = performance.now();
   const warnings = [];
+  const foreign = []; // links to another matière, per file
   const config = JSON.parse(await fs.readFile(path.join(ROOT, 'site.config.json'), 'utf8'));
   const files = existsSync(CONTENT) ? (await walk(CONTENT)).sort(natural) : [];
   const dates = gitDates();
@@ -346,9 +348,21 @@ export async function build({ quiet = false } = {}) {
   }
 
   // ── Markdown renderer (Obsidian flavoured) ───────────────────────────
-  const ctx = { rel: null, links: new Set(), tags: new Set(), headings: [], slugs: new Map(), broken: [] };
-  const resetCtx = (rel) => Object.assign(ctx, { rel, links: new Set(), tags: new Set(), headings: [], slugs: new Map(), broken: [] });
+  const ctx = { rel: null, matiere: null, links: new Set(), tags: new Set(), headings: [], slugs: new Map(), broken: [], foreign: [] };
+  const matiereOfRel = (rel) => {
+    const top = rel?.includes('/') ? rel.split('/')[0] : null;
+    return top && !top.startsWith('_') ? matieres.get(slugify(top))?.id ?? null : null;
+  };
+  const resetCtx = (rel) => Object.assign(ctx, { rel, matiere: matiereOfRel(rel), links: new Set(), tags: new Set(), headings: [], slugs: new Map(), broken: [], foreign: [] });
   const typeOf = (id) => TYPES.find((t) => t.id === id);
+
+  // Every matière is its own world: a link to another matière's note (or to the
+  // matière itself) is shown as plain text and never becomes an edge or a backlink.
+  const entryMatiere = (entry) => (entry.kind === 'matiere' ? entry.matiere.id : entry.kind === 'item' ? entry.item.matiere : null);
+  const crossesMatiere = (entry, from = ctx.matiere) => {
+    const to = entryMatiere(entry);
+    return Boolean(from && to && to !== from);
+  };
 
   const hrefFor = (entry, heading) => {
     if (entry.kind === 'matiere') return `#/m/${entry.matiere.id}`;
@@ -371,6 +385,10 @@ export async function build({ quiet = false } = {}) {
       ctx.broken.push(target);
       return `<span class="wikilink broken" title="Note introuvable : ${escapeHtml(target)}">${label}</span>`;
     }
+    if (crossesMatiere(entry)) {
+      ctx.foreign.push(target);
+      return label;
+    }
     if (entry.node) ctx.links.add(entry.node);
     return `<a class="wikilink" href="${hrefFor(entry, heading)}"${entry.kind === 'asset' ? ' target="_blank"' : ''}>${label}</a>`;
   }
@@ -381,6 +399,10 @@ export async function build({ quiet = false } = {}) {
     if (!entry) {
       ctx.broken.push(target);
       return `<span class="wikilink broken" title="Fichier introuvable">${escapeHtml(target)}</span>`;
+    }
+    if (crossesMatiere(entry)) {
+      ctx.foreign.push(target);
+      return escapeHtml(alias || target);
     }
     if (entry.node) ctx.links.add(entry.node);
     if (entry.kind === 'matiere') return renderWikilink(raw);
@@ -515,6 +537,10 @@ export async function build({ quiet = false } = {}) {
         const [target, heading] = decoded.split('#');
         const entry = resolve(target, ctx.rel);
         if (!entry) return `<a href="${escapeHtml(href)}"${titleAttr}>${text}</a>`;
+        if (crossesMatiere(entry)) {
+          ctx.foreign.push(target);
+          return text;
+        }
         if (entry.node) ctx.links.add(entry.node);
         return `<a class="wikilink" href="${hrefFor(entry, heading)}"${titleAttr}>${text}</a>`;
       },
@@ -536,6 +562,10 @@ export async function build({ quiet = false } = {}) {
     ctx.self = self;
     const html = md.parse(body);
     if (ctx.broken.length) warnings.push(`${rel}: lien(s) introuvable(s) → ${[...new Set(ctx.broken)].join(', ')}`);
+    if (ctx.foreign.length) {
+      warnings.push(`${rel}: lien(s) vers une autre matière, affichés en texte simple → ${[...new Set(ctx.foreign)].join(', ')}`);
+      foreign.push({ rel, targets: [...new Set(ctx.foreign)] });
+    }
     return html;
   };
 
@@ -550,7 +580,7 @@ export async function build({ quiet = false } = {}) {
     }
     for (const target of item.fmLinks) {
       const entry = resolve(target.split('|')[0].split('#')[0], item.rel);
-      if (entry?.node && !item.links.includes(entry.node)) item.links.push(entry.node);
+      if (entry?.node && !crossesMatiere(entry, item.matiere) && !item.links.includes(entry.node)) item.links.push(entry.node);
     }
   }
   for (const m of matieres.values()) {
@@ -566,7 +596,7 @@ export async function build({ quiet = false } = {}) {
     const siblings = items.filter((i) => i.matiere === corr.matiere && i.type !== 'correction');
     // "td1" pairs with "td1suites" but not with "td12"
     const pairs = (a, b) => b === a || (/\d$/.test(a) && b.startsWith(a) && !/\d/.test(b[a.length]));
-    const target = corr.fmLinks.map((t) => resolve(t, corr.rel)?.item).find((i) => i && i.type !== 'correction')
+    const target = corr.fmLinks.map((t) => resolve(t, corr.rel)?.item).find((i) => i && i.type !== 'correction' && i.matiere === corr.matiere)
       ?? siblings.find((i) => pairs(pairKey(corr.title), pairKey(i.title)))
       ?? siblings.find((i) => pairs(pairKey(corr.name), pairKey(i.name)));
     if (!target) continue;
@@ -622,6 +652,7 @@ export async function build({ quiet = false } = {}) {
     site: {
       ...config,
       wallpaper: config.wallpaper && !/^(https?:)?\/\//.test(config.wallpaper) ? fileUrl(config.wallpaper) : config.wallpaper ?? null,
+      ...(dev ? { dev: true } : {}),
     },
     builtAt: new Date().toISOString(),
     types: TYPES.map(({ match, ...t }) => t),
@@ -634,6 +665,8 @@ export async function build({ quiet = false } = {}) {
   const search = items.map((i) => ({ id: i.id, text: i.kind === 'note' ? plainText(i.body).slice(0, 30000) : '' }));
 
   await fs.mkdir(DIST, { recursive: true });
+  // Scripts and styles are copied fresh, so a file removed from src/ doesn't linger in dist/.
+  for (const dir of ['js', 'css']) await fs.rm(path.join(DIST, dir), { recursive: true, force: true });
   await fs.cp(SRC, DIST, { recursive: true });
   await fs.rm(path.join(DIST, 'data'), { recursive: true, force: true });
   await fs.mkdir(path.join(DIST, 'data', 'html'), { recursive: true });
@@ -651,16 +684,33 @@ export async function build({ quiet = false } = {}) {
     if (font.endsWith('.woff2')) await copyIfChanged(path.join(katexDist, 'fonts', font), path.join(DIST, 'vendor', 'katex', 'fonts', font));
   }
 
+  await writeServiceWorker([...htmlById.keys()]);
+
   const published = [...items.filter((i) => i.kind !== 'note').map((i) => i.rel), ...assets.map((a) => a.rel)];
   await Promise.all(published.map((rel) => copyIfChanged(path.join(CONTENT, rel), path.join(DIST, 'files', rel))));
   await removeStale(path.join(DIST, 'files'), new Set(published));
 
-  const stats = { matieres: matieres.size, notes: items.filter((i) => i.kind === 'note').length, documents: items.filter((i) => i.kind !== 'note').length, canvases: canvasFiles.length, ms: Math.round(performance.now() - t0), warnings };
+  const stats = { matieres: matieres.size, notes: items.filter((i) => i.kind === 'note').length, documents: items.filter((i) => i.kind !== 'note').length, canvases: canvasFiles.length, ms: Math.round(performance.now() - t0), warnings, foreign };
   if (!quiet) {
     console.log(`✿ ${stats.matieres} matières · ${stats.notes} notes · ${stats.documents} documents · ${stats.canvases} canvas — ${stats.ms} ms`);
     for (const w of warnings) console.warn(`  ⚠ ${w}`);
   }
   return stats;
+}
+
+// dist/sw.js: the offline copy (src/sw.js) with the list of files to keep and a version
+// that changes only when one of them does.
+async function writeServiceWorker(noteIds) {
+  const srcFiles = (await walk(SRC)).filter((f) => f !== 'sw.js');
+  const vendor = (await walk(path.join(DIST, 'vendor'))).map((f) => `vendor/${f}`);
+  const list = ['./', ...srcFiles, 'data/vault.json', 'data/search.json', ...noteIds.map((id) => `data/html/${id}.html`), ...vendor];
+  const hash = createHash('sha256');
+  for (const f of list.slice(1)) hash.update(f).update(await fs.readFile(path.join(DIST, f)));
+  const urls = list.map((f) => f.split('/').map(encodeURIComponent).join('/').replace(/^\.%2F$|^\.$/, './'));
+  const template = await fs.readFile(path.join(SRC, 'sw.js'), 'utf8');
+  await fs.writeFile(path.join(DIST, 'sw.js'), template
+    .replace("'__VERSION__'", JSON.stringify(hash.digest('hex').slice(0, 12)))
+    .replace("'__PRECACHE__'", JSON.stringify(urls)));
 }
 
 // Auto-generated board for a matière: one group per type, corrections placed next to their énoncé.

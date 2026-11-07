@@ -75,7 +75,7 @@ curl -i -X DELETE http://localhost:8080/api/etudiants/1
 ## Bonus
 
 - [ ] Pagination : `GET /api/etudiants?page=0&size=5` avec `Pageable`
-- [ ] Consommer l'API depuis l'application du [[TP 1 - Application de tâches avec Expo|TP de développement mobile]] (sur le téléphone, `localhost` désigne le téléphone : utiliser l'IP du PC)
+- [ ] Consommer l'API depuis l'application du TP de développement mobile (sur le téléphone, `localhost` désigne le téléphone : utiliser l'IP du PC)
 
 ## À rendre
 

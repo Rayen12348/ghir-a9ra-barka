@@ -28,7 +28,7 @@ flowchart LR
 | Tests et déploiement | 2 semaines | application en ligne, tests |
 | Rédaction et soutenance | 3 semaines (idéalement en continu) | rapport, présentation |
 
-La recherche du stage s'appuie sur le cours d'[[Chapitre 1 - Préparer son insertion professionnelle|insertion professionnelle]].
+La recherche du stage s'appuie sur le cours d'insertion professionnelle.
 
 ## Le cahier des charges
 
@@ -73,7 +73,7 @@ Les diagrammes UML les plus attendus :
 - **Cas d'utilisation** : les acteurs et les fonctionnalités (le « quoi »).
 - **Diagrammes de séquence** : les échanges dans un scénario précis.
 - **Diagramme de classes** : la structure des données.
-- **Architecture** : couches, services, déploiement — souvent un client et une API, ou des microservices (voir [[Chapitre 1 - SOA, SOAP et REST]]).
+- **Architecture** : couches, services, déploiement — souvent un client et une API, ou des microservices (voir Chapitre 1 - SOA, SOAP et REST).
 
 ## Le rapport
 

@@ -72,7 +72,7 @@ Tout est en Flexbox, mais avec `flexDirection: 'column'` **par défaut** (au lie
 
 ## Effets et appels réseau
 
-`useEffect` lance du code **après** le rendu, par exemple pour charger des données depuis une API REST (voir le [[Chapitre 1 - SOA, SOAP et REST|cours SOA]]).
+`useEffect` lance du code **après** le rendu, par exemple pour charger des données depuis une API REST (voir le cours SOA).
 
 ```jsx
 const [users, setUsers] = useState([]);

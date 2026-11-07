@@ -1,6 +1,6 @@
-# cozy·class
+# ghir-a9ra-barka
 
-A cozy study site for the class: every matière with its cours, TD, TP, corrections and résumés. It works like Obsidian (graph view, canvas boards, wikilinks) and has a study room with a pomodoro timer, lofi radio and ambient sounds. The look borrows from riced Linux desktops (rofi/waybar style, Catppuccin and friends).
+A cozy study site for the class: every matière with its cours, TD, TP, corrections and résumés. It works like Obsidian (graph view, canvas boards, wikilinks) and has a study room with a pomodoro timer and ambient sounds. Anyone in the class can add notes and links to any page, live for everyone (see [Ajouts de la classe](#ajouts-de-la-classe-live)). The look borrows from riced Linux desktops (rofi/waybar style, Catppuccin and friends).
 
 **The `content/` folder is an Obsidian vault.** You write notes and drop PDFs in Obsidian, then rebuild, and the site shows them.
 
@@ -70,6 +70,8 @@ If there's no type folder, the first word of the filename is used ("TP1 - Tri.pd
 
 `[[wikilinks]]`, `[[note#section|alias]]`, embeds (`![[image.png|300]]`, `![[cours.pdf]]`, `![[other note]]`, `![[note#section]]`), callouts (`> [!tip]`, foldable `> [!note]-`, plus French ones: `definition`, `theoreme`, `propriete`, `remarque`, `methode`, `exemple`), math `$…$` / `$$…$$`, highlighted code, mermaid diagrams, `==highlights==`, `#tags`, task lists (students can tick them), `%%comments%%`.
 
+**Each matière stands alone.** The graph never links two matières: a `[[link]]` to a note of another matière is shown as plain text, without an edge or a backlink, and `npm run build` lists every such link so you can reword it.
+
 Each matière gets an auto-generated **carte** (canvas) laid out by type. Any `.canvas` file you make in Obsidian inside a matière folder becomes an extra tab, with the same format and colors.
 
 ## Customising — `site.config.json`
@@ -78,25 +80,60 @@ Each matière gets an auto-generated **carte** (canvas) laid out by type. Any `.
 - `theme` / `accent`: defaults for first-time visitors (`mocha`, `macchiato`, `latte`, `rose-pine`, `dawn`, `tokyo-night`, `gruvbox`, `nord`, `everforest`)
 - `wallpaper`: a path inside `content/` (e.g. `_assets/wall.jpg`) or a URL
 - `pomodoro`: default durations in minutes
-- `stations`: radio list. `{ "type": "youtube", "id": "<video id>" }` or `{ "type": "stream", "url": "<mp3/aac stream>" }`. Some stations (SomaFM, for example) block playback from other websites, so test a new stream before you add it.
+- `musicApp`: the headphones icon in the top bar (and `m`), the only music on the site. Remove the key to hide it.
+  ```json
+  "musicApp": { "name": "Metrolist", "url": "http://localhost:4747", "android": "com.metrolist.music", "fallback": "https://music.youtube.com/" }
+  ```
+  - On a computer it opens Metrolist Web (`url`), which runs on that computer: `~/Projects/metrolist/scripts/install-desktop.sh --service` starts it at every login so the icon always works.
+  - On Android it opens the [Metrolist](https://github.com/MetrolistGroup/Metrolist) app (`android` is its package name), or `fallback` if the app isn't installed.
+  - On iPhone and iPad it opens `fallback` (Metrolist is Android only).
+- `collab`: `{ "url": "https://…workers.dev" }`, the address of the additions server (next section). Without it, the site has no additions.
 
-The ambient sounds (rain, fire, waves, wind, brown noise) are generated in the browser, so there are no audio files to host.
+The ambient sounds of the study room (rain, fire, waves, wind, brown noise) are generated in the browser, so there are no audio files to host.
 
-- `musicApp`: address of [Metrolist Web](https://github.com/MetrolistGroup/Metrolist) running on your computer, `{ "name": "Metrolist", "url": "http://localhost:4747" }`. It turns on the **chansons** panel (below). Remove the key to hide it.
+## Ajouts de la classe (live)
 
-## Chansons (play any song)
+Anyone on the site can add a **note** or a **link** to any node: a matière, a cours, a TP, a PDF, or another addition (replies nest). It reaches everyone in a fraction of a second, and shows up:
 
-The headphones icon in the top bar (or `c`) opens a panel where you search any song and play it right here: it keeps playing while you move between pages, similar songs follow automatically, and the floating player at the bottom shows it. The study room has the same panel. In the launcher (`ctrl k`), type a song and pick « Jouer … » to play it directly. Starting the radio pauses the song and vice versa.
+- in the *ajouts de la classe* thread at the bottom of every matière, note and document page;
+- in the graph, as small nodes hanging off the node they were added to (right-click any node to add to it);
+- on the matière carte, as a counter on each card (right-click a card to add to it);
+- in the home page activity feed and in the launcher search.
 
-Search and audio come from **Metrolist Web**, a small app in `~/Projects/metrolist` that must run on the same computer (a website alone can't reach YouTube Music). It only lets this site search and play; your library stays private.
+The pill in the top bar shows how many people are online (click it for who is on which matière, your name, and the moderation key); each matière header shows how many are on it. An addition can only be edited or deleted from the browser that wrote it, or by whoever has the moderation key. Text is never treated as HTML; `**bold**`, `` `code` ``, lists and `[[title of a note]]` (same matière only) work.
+
+**It stays smooth for a whole class.** Tested locally with 250 browsers at once, 150 of them adding all the time (20 additions a second): every addition confirmed and delivered to the others in under 50 ms (p95), none refused, lost or duplicated. When all 250 were cut off and came back within 3 seconds, each reconnected in under 40 ms and got what was written during the cut. On the student's side:
+
+- what you have already seen is kept in your browser, so pages show at once, even offline;
+- what you add is saved in your browser first and sent until the server confirms it: a bad connection, a closed laptop or a reload never loses it, and retries never duplicate it;
+- the connection comes back by itself, spread out so 150 phones don't all knock at the same second; on networks that block live connections it switches to checking every 15 s;
+- after the first visit, a service worker keeps the whole site (every note and its data) on the device, so it opens even without Wi-Fi. PDFs are kept once opened.
+
+### Turning it on (once, free)
+
+The server is in `worker/`: a Cloudflare Worker with one Durable Object (a SQLite database plus live connections that cost nothing while idle). The free Cloudflare plan is enough.
 
 ```sh
-cd ~/Projects/metrolist && npm install && scripts/install-desktop.sh   # once
-metrolist-web --server                  # start it in the background
-scripts/install-desktop.sh --service    # optional: start it at every login
+cd worker
+npm install
+npx wrangler login     # opens the browser to sign in to Cloudflare (free account)
+npx wrangler deploy    # prints the address, e.g. https://ghir-a9ra-barka-collab.<you>.workers.dev
 ```
 
-If it isn't running, the panel says so. Chrome may ask once whether this site may access apps on your device: allow it.
+Put that address in `site.config.json` (`"collab": { "url": "https://ghir-a9ra-barka-collab.<you>.workers.dev" }`) and push.
+
+Optional secrets, set from `worker/`:
+
+| Command | Effect |
+|---|---|
+| `npx wrangler secret put ADMIN_KEY` | moderation key: type it in the online pill → *modération* to delete any addition; also needed for backups |
+| `npx wrangler secret put CLASS_CODE` | a code students type once before they can add anything (reading stays open to all) |
+
+`ALLOWED_ORIGINS` in `worker/wrangler.jsonc` lists the sites allowed to use the server (the GitHub Pages address and localhost). Change it if the site moves.
+
+- **Backup:** `curl "https://ghir-a9ra-barka-collab.<you>.workers.dev/api/export?admin=<ADMIN_KEY>" > ajouts.json`
+- **Limits** (keep it tidy and the server safe): 8,000 characters per addition, 400 additions under one node, 20,000 in total, and one addition every 4 seconds per browser on average (bursts of 12 are fine).
+- **Local test:** `npm run dev` in `worker/` (port 8790), then in the site's browser console `localStorage['cozy.collab.url'] = '"http://localhost:8790"'` and reload. `npm test` in `worker/` runs the protocol tests and the 250-browser load test against it.
 
 ## Putting it online for the class (GitHub Pages)
 
@@ -106,11 +143,11 @@ If it isn't running, the panel says so. Chrome may ask once whether this site ma
 
 Netlify, Vercel and Cloudflare Pages work as well: build command `npm run build`, output folder `dist`.
 
-> The site is static and **public to anyone with the link**. For a private site, Cloudflare Pages + Cloudflare Access (free for small groups) can restrict it to your classmates' emails.
+> The site is **public to anyone with the link**, and so are the additions (set a `CLASS_CODE` to limit who can write). For a private site, Cloudflare Pages + Cloudflare Access (free for small groups) can restrict it to your classmates' emails.
 
 ## What's saved where
 
-Each student's progress (notes marked *vu*, ticked tasks), pomodoro stats, to-dos, theme and canvas card positions stay **in their own browser** (localStorage). There's no account, no server and nothing to maintain.
+The additions (and only them) live on the server in `worker/`. Everything else, each student's progress (notes marked *vu*, ticked tasks), pomodoro stats, to-dos, theme and canvas card positions, stays **in their own browser** (localStorage). There's no account: a random key in the browser is what lets you edit your own additions, so clearing the browser's data means you can no longer edit the old ones.
 
 ## Shortcuts
 
@@ -120,8 +157,9 @@ Each student's progress (notes marked *vu*, ticked tasks), pomodoro stats, to-do
 | `Alt 1…9` | jump to a matière |
 | `Ctrl B` | toggle the sidebar |
 | `g` / `e` / `h` | graph / study room / home |
-| `p` / `m` | start or pause the pomodoro / music |
-| `c` | chansons: search and play any song |
+| `p` | start or pause the pomodoro |
+| `m` | open Metrolist |
+| `Ctrl Enter` | send an addition (`Esc` cancels) |
 
 ## Project layout
 
@@ -129,8 +167,11 @@ Each student's progress (notes marked *vu*, ticked tasks), pomodoro stats, to-do
 scripts/build.mjs   vault → dist/ (markdown, links, canvases, search index)
 scripts/dev.mjs     local server with live reload
 src/                the site itself (vanilla JS modules, no framework)
-  js/views/         home, matière, note, graph, canvas, study room
+  js/views/         home, matière, note, addition, graph, canvas, study room
   js/graph.js       force-directed graph · js/jcanvas.js  JSON Canvas renderer
-  js/audio.js       ambient sound synth · js/music.js  radio + mini player
+  js/collab.js      additions: cache, outbox, live connection · js/contribs.js  their UI
+  js/audio.js       ambient sound synth
+  sw.js             offline copy of the site (the build fills in the file list)
   css/style.css     everything visual
+worker/             the additions server (Cloudflare Worker + Durable Object) and its tests
 ```

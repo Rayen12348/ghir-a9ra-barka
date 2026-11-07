@@ -103,7 +103,7 @@ Changer `/factures/41` en `/factures/42` donne la facture de quelqu'un d'autre. 
 
 ## Authentifier une API
 
-Les services REST ([[Chapitre 1 - SOA, SOAP et REST]]) utilisent souvent des jetons **JWT** de la forme `en-tête.contenu.signature`, encodés en Base64URL.
+Les services REST (Chapitre 1 - SOA, SOAP et REST) utilisent souvent des jetons **JWT** de la forme `en-tête.contenu.signature`, encodés en Base64URL.
 
 > [!warning] Un JWT n'est pas chiffré
 > N'importe qui peut lire son contenu. La signature garantit seulement qu'il n'a **pas été modifié**. Jamais de mot de passe ni de donnée sensible dedans.

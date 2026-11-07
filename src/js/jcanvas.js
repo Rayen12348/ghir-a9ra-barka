@@ -4,6 +4,8 @@ import { PanZoom } from './panzoom.js';
 import { icon } from './icons.js';
 import { esc, store, clamp, fmtSize } from './util.js';
 import { enhance } from './enhance.js';
+import { collab } from './collab.js';
+import { quickAdd } from './contribs.js';
 
 const PRESETS = { 1: 'red', 2: 'peach', 3: 'yellow', 4: 'green', 5: 'teal', 6: 'mauve' };
 const NORMAL = { top: [0, -1], bottom: [0, 1], left: [-1, 0], right: [1, 0] };
@@ -65,8 +67,9 @@ function nodeContent(n) {
 
 const openTarget = (n) => (n.ref ? `#/n/${n.ref}${n.heading ? `?h=${n.heading}` : ''}` : n.matiereRef ? `#/m/${n.matiereRef}` : null);
 
-export function mountCanvas(host, canvas) {
+export function mountCanvas(host, canvas, { matiere = canvas.matiere } = {}) {
   host.classList.add('jc');
+  const adding = collab.enabled && matiere;
   host.innerHTML = `
     <div class="jc-world"><svg class="jc-edges"></svg><div class="jc-labels"></div></div>
     <div class="jc-controls">
@@ -74,8 +77,9 @@ export function mountCanvas(host, canvas) {
       <button class="icon-btn" data-z="out" title="Dézoomer">${icon('minus')}</button>
       <button class="icon-btn" data-z="fit" title="Tout voir">${icon('fit')}</button>
       <button class="icon-btn" data-z="reset" title="Remettre les cartes en place" hidden>${icon('reset')}</button>
+      ${adding ? `<button class="icon-btn" data-z="add" title="Ajouter une note ou un lien à la matière">${icon('message')}</button>` : ''}
     </div>
-    <div class="jc-hint hide-sm">glisser : déplacer · molette : zoom · clic : ouvrir</div>`;
+    <div class="jc-hint hide-sm">glisser : déplacer · molette : zoom · clic : ouvrir${adding ? ' · clic droit : ajouter à une carte' : ''}</div>`;
   const world = host.querySelector('.jc-world');
   const svg = host.querySelector('.jc-edges');
   const labels = host.querySelector('.jc-labels');
@@ -113,6 +117,41 @@ export function mountCanvas(host, canvas) {
   const markDone = () => world.querySelectorAll('[data-ref]').forEach((el) => el.classList.toggle('done', progress.has(el.dataset.ref)));
   markDone();
   const offProgress = progress.events.on(markDone);
+
+  // How many additions the class made on each card (live).
+  const markAdds = () => {
+    for (const el of world.querySelectorAll('.jc-node[data-ref]')) {
+      const n = collab.count(el.dataset.ref);
+      let badge = el.querySelector(':scope > .jc-adds');
+      if (!n) {
+        badge?.remove();
+        continue;
+      }
+      if (!badge) {
+        badge = document.createElement('a');
+        badge.className = 'jc-adds';
+        badge.href = `#/n/${el.dataset.ref}?h=ajouts`;
+        badge.draggable = false;
+        el.append(badge);
+      }
+      badge.title = `${n} ajout${n > 1 ? 's' : ''} de la classe`;
+      badge.innerHTML = `${icon('message')}${n}`;
+    }
+  };
+  let addsTimer = null;
+  const offAdds = adding ? collab.events.on(() => {
+    clearTimeout(addsTimer);
+    addsTimer = setTimeout(markAdds, 300);
+  }) : () => {};
+  if (adding) markAdds();
+  const onContext = (e) => {
+    if (!adding) return;
+    const el = e.target.closest('.jc-node[data-ref]');
+    if (!el) return;
+    e.preventDefault();
+    quickAdd({ parent: el.dataset.ref, matiere, x: e.clientX, y: e.clientY });
+  };
+  host.addEventListener('contextmenu', onContext);
 
   function drawEdges() {
     let paths = '';
@@ -236,6 +275,10 @@ export function mountCanvas(host, canvas) {
     if (z === 'in') pz.zoomBy(1.25);
     if (z === 'out') pz.zoomBy(0.8);
     if (z === 'fit') fit();
+    if (z === 'add') {
+      const r = e.target.closest('[data-z]').getBoundingClientRect();
+      quickAdd({ parent: `m:${matiere}`, matiere, x: r.left - 160, y: r.top - 340 });
+    }
     if (z === 'reset') {
       store.set(posKey, {});
       for (const n of nodes) {
@@ -251,6 +294,8 @@ export function mountCanvas(host, canvas) {
   return () => {
     pz.destroy();
     offProgress();
+    offAdds();
+    clearTimeout(addsTimer);
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', onUp);
   };

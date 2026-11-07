@@ -11,4 +11,4 @@ ordre: 4
 |---|---|---|---|---|---|---|---|
 | Machine Learning et sécurité (`573103530`) | 1 | 2 | Mixte | 21 h | — | 10,5 h | 31,5 h |
 
-Même UE que [[Machine Learning]].
+Même UE que Machine Learning.

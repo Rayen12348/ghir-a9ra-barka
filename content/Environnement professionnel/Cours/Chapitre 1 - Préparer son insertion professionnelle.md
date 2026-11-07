@@ -4,7 +4,7 @@ tags: [insertion-pro, cv, entretien]
 ---
 # Préparer son insertion professionnelle
 
-Ce cours prépare la recherche du stage de fin d'études ([[PFE]]) et du premier emploi : se connaître, se présenter par écrit (CV, lettre, LinkedIn), puis à l'oral (entretien).
+Ce cours prépare la recherche du stage de fin d'études (PFE) et du premier emploi : se connaître, se présenter par écrit (CV, lettre, LinkedIn), puis à l'oral (entretien).
 
 ## 1. Faire son bilan
 
@@ -76,7 +76,7 @@ Les questions fréquentes :
 | « Un conflit en équipe ? » | de la maturité et de la communication (réponse STAR) |
 | « Avez-vous des questions ? » | de la curiosité — toujours en avoir |
 
-Les entretiens techniques ajoutent souvent un exercice de code, des questions sur les projets du CV ou un cas d'architecture. Pour les entretiens en anglais, voir [[Chapter 1 - Professional communication]].
+Les entretiens techniques ajoutent souvent un exercice de code, des questions sur les projets du CV ou un cas d'architecture. Pour les entretiens en anglais, voir Chapter 1 - Professional communication.
 
 ### Après
 

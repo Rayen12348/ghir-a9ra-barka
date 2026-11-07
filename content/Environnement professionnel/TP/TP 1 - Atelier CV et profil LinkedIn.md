@@ -4,7 +4,7 @@ tags: [cv, linkedin, entretien]
 ---
 # TP 1 — Atelier CV et profil LinkedIn
 
-**Objectif** : repartir de l'atelier avec un CV prêt à envoyer pour le stage de [[PFE]], un profil LinkedIn à jour et une présentation orale de 2 minutes. Notions du [[Chapitre 1 - Préparer son insertion professionnelle]].
+**Objectif** : repartir de l'atelier avec un CV prêt à envoyer pour le stage de PFE, un profil LinkedIn à jour et une présentation orale de 2 minutes. Notions du [[Chapitre 1 - Préparer son insertion professionnelle]].
 
 ## Étape 1 — Bilan (20 min)
 

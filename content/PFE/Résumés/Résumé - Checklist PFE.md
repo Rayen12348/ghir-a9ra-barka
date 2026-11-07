@@ -6,7 +6,7 @@ tags: [pfe]
 
 ## Avant le stage
 
-- [ ] CV et profil LinkedIn à jour ([[Résumé - Environnement professionnel]])
+- [ ] CV et profil LinkedIn à jour (Résumé - Environnement professionnel)
 - [ ] Candidatures envoyées, entretiens passés
 - [ ] Sujet validé par l'encadrant universitaire
 - [ ] Convention de stage signée
@@ -45,4 +45,4 @@ tags: [pfe]
 > [!tip] Ce que le jury évalue
 > La compréhension du problème, la qualité de la démarche, la justification des choix, le travail réalisé et la clarté de la présentation — pas seulement le nombre de fonctionnalités.
 
-Cours : [[Chapitre 1 - Méthodologie du PFE]] · atelier : [[TP 1 - Rédiger le cahier des charges]] · aller plus loin avec son projet : [[Résumé - Entreprenariat]].
+Cours : [[Chapitre 1 - Méthodologie du PFE]] · atelier : [[TP 1 - Rédiger le cahier des charges]] · aller plus loin avec son projet : Résumé - Entreprenariat.

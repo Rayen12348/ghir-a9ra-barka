@@ -48,4 +48,4 @@ Fonds propres et *love money* → concours, incubateurs, subventions → busines
 > [!tip] La règle simple
 > Un modèle est sain quand la **LTV dépasse nettement le CAC**.
 
-Cours : [[Chapitre 1 - De l'idée au projet d'entreprise]] · atelier : [[TP 1 - Atelier Business Model Canvas]] · se présenter et pitcher : [[Résumé - Environnement professionnel]].
+Cours : [[Chapitre 1 - De l'idée au projet d'entreprise]] · atelier : [[TP 1 - Atelier Business Model Canvas]] · se présenter et pitcher : Résumé - Environnement professionnel.

@@ -43,7 +43,7 @@ setListe(liste.map((x) => (x.id === id ? { ...x, ...modifs } : x)));  // modifie
 
 ## Les données
 
-- Depuis une API : `fetch(url).then((r) => r.json())` dans un `useEffect` → voir les API REST dans [[Résumé - Services Web]].
+- Depuis une API : `fetch(url).then((r) => r.json())` dans un `useEffect` → voir les API REST dans Résumé - Services Web.
 - Sur le téléphone : `AsyncStorage.setItem(cle, JSON.stringify(v))` / `JSON.parse(await AsyncStorage.getItem(cle))`.
 
 > [!tip] Tester une API locale depuis le téléphone

@@ -1,9 +1,7 @@
 import { loadVault, vault, items, matieres, canvases } from './data.js';
 import { initTheme } from './themes.js';
 import { pomodoro } from './pomodoro.js';
-import { radio, mountDock } from './music.js';
-import { mountBar, setWorkspace, applyReading, closePopover, openSongs } from './bar.js';
-import { songs } from './songs.js';
+import { mountBar, setWorkspace, applyReading, closePopover, openMusicApp } from './bar.js';
 import { mountSidebar, setActive } from './sidebar.js';
 import { initLauncher, openLauncher, toggleLauncher, launcherOpen } from './launcher.js';
 import { renderHome } from './views/home.js';
@@ -12,6 +10,9 @@ import { renderNote } from './views/note.js';
 import { renderGraph } from './views/graph.js';
 import { renderCanvasPage } from './views/canvas.js';
 import { renderStudy } from './views/study.js';
+import { renderContrib } from './views/contrib.js';
+import { collab, contribTitle } from './collab.js';
+import { closeQuickAdd } from './contribs.js';
 import { notFound } from './views/notfound.js';
 import { $, esc, go, store, isMobile } from './util.js';
 
@@ -25,6 +26,7 @@ const ROUTES = [
   [/^\/c\/(.+)$/, renderCanvasPage, ([id]) => canvases.get(`c/${id}`)?.title],
   [/^\/graph$/, renderGraph, () => 'Graphe'],
   [/^\/etude$/, renderStudy, () => "Salle d'étude"],
+  [/^\/a\/([^/]+)$/, renderContrib, ([id]) => (collab.nodes.get(id) ? contribTitle(collab.nodes.get(id)) : 'Ajout')],
 ];
 
 let cleanup = null;
@@ -35,6 +37,7 @@ async function route() {
   const [path, qs = ''] = (location.hash.replace(/^#/, '') || '/').split('?');
   const query = new URLSearchParams(qs);
   closePopover();
+  closeQuickAdd();
   if (isMobile()) document.body.classList.remove('side-open');
 
   // Same note, different heading: just scroll.
@@ -57,8 +60,9 @@ async function route() {
   const title = match?.[2](params);
   pomodoro.setTitle(title ? `${title} — ${vault.site.title}` : vault.site.title);
 
-  const matiere = path.startsWith('/m/') ? params[0] : path.startsWith('/n/') ? items.get(params[0])?.matiere : path.startsWith('/c/') ? canvases.get(`c/${params[0]}`)?.matiere : null;
+  const matiere = path.startsWith('/m/') ? params[0] : path.startsWith('/n/') ? items.get(params[0])?.matiere : path.startsWith('/c/') ? canvases.get(`c/${params[0]}`)?.matiere : path.startsWith('/a/') ? collab.nodes.get(params[0])?.matiere : null;
   pomodoro.context = () => matiere ?? null;
+  collab.here(matiere);
   setWorkspace(matiere);
   setActive(path);
 
@@ -116,6 +120,7 @@ function shortcuts(e) {
   }
   if (e.key === 'Escape') {
     closePopover();
+    closeQuickAdd();
     document.body.classList.remove('side-open');
     return;
   }
@@ -126,8 +131,7 @@ function shortcuts(e) {
     e: () => go('#/etude'),
     h: () => go('#/'),
     p: () => pomodoro.toggle(),
-    m: () => (songs.active && songs.current ? songs.toggle() : radio.toggle()),
-    c: () => openSongs(),
+    m: () => openMusicApp(),
   };
   if (actions[e.key]) {
     e.preventDefault();
@@ -155,8 +159,7 @@ async function boot() {
 
   mountBar($('#bar'), { onMenu: toggleSidebar, onSearch: () => openLauncher() });
   mountSidebar(sidebar);
-  mountDock($('#dock'));
-  initLauncher($('#launcher'), { toggleSidebar, rename, openSongs });
+  initLauncher($('#launcher'), { toggleSidebar, rename });
 
   $('.scrim').addEventListener('click', () => document.body.classList.remove('side-open'));
   document.addEventListener('keydown', shortcuts);
@@ -165,6 +168,15 @@ async function boot() {
   });
   window.addEventListener('hashchange', route);
   route();
+  collab.start();
+  registerServiceWorker();
+}
+
+// Offline copy of the site (see src/sw.js). Not in `npm run dev`, which reloads on every save.
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator) || vault.site.dev) return;
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}), { once: true });
+  if (document.readyState === 'complete') navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
 boot();

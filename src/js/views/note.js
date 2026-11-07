@@ -3,6 +3,8 @@ import { ForceGraph, localGraph } from '../graph.js';
 import { icon } from '../icons.js';
 import { esc, fmtDate, fmtSize, go } from '../util.js';
 import { enhance } from '../enhance.js';
+import { collab } from '../collab.js';
+import { mountThread } from '../contribs.js';
 import { notFound } from './notfound.js';
 
 const linkList = (ids) => ids
@@ -46,6 +48,7 @@ export async function renderNote(view, { params: [id], query, alive }) {
         ${it.url ? `<a class="btn sm" href="${it.url}" target="_blank" rel="noopener">${icon('external')} ouvrir</a><a class="btn sm" href="${it.url}" download>${icon('download')} télécharger</a>` : ''}
       </div>
       <div class="prose" id="prose"><div class="skeleton"></div><div class="skeleton short"></div><div class="skeleton"></div></div>
+      <section class="thread-host"></section>
       <nav class="note-nav">
         ${prev ? `<a class="card nav-prev" href="#/n/${prev.id}"><small>${icon('left')} précédent</small><span>${esc(prev.title)}</span></a>` : '<span></span>'}
         ${next ? `<a class="card nav-next" href="#/n/${next.id}"><small>suivant ${icon('right')}</small><span>${esc(next.title)}</span></a>` : ''}
@@ -53,6 +56,7 @@ export async function renderNote(view, { params: [id], query, alive }) {
     </article>
     <aside class="note-aside">
       <section class="toc-wrap" hidden><div class="panel-title">${icon('list')} sommaire</div><nav class="toc"></nav></section>
+      ${collab.enabled ? `<section class="aside-adds" hidden><a class="side-ref" href="#/n/${id}?h=ajouts" style="--c:var(--pink)">${icon('message')}<span></span></a></section>` : ''}
       <section><div class="panel-title">${icon('graph')} graphe local <a class="panel-link" href="#/graph?focus=${encodeURIComponent(id)}">agrandir</a></div><div class="mini-graph"><canvas></canvas></div></section>
       ${it.backlinks.length ? `<section><div class="panel-title">${icon('link')} mentionné dans</div>${linkList(it.backlinks)}</section>` : ''}
       ${outgoing.length ? `<section><div class="panel-title">${icon('right')} liens</div>${linkList(outgoing)}</section>` : ''}
@@ -69,7 +73,25 @@ export async function renderNote(view, { params: [id], query, alive }) {
   doneBtn.addEventListener('click', () => progress.toggle(id));
   const offProgress = progress.events.on(paintDone);
 
-  const graph = new ForceGraph(view.querySelector('.mini-graph canvas'), { ...localGraph(id), focus: id, compact: true, onOpen: (n) => go(n.kind === 'matiere' ? `#/m/${n.matiere}` : `#/n/${n.id}`) });
+  const graph = new ForceGraph(view.querySelector('.mini-graph canvas'), { ...localGraph(id), focus: id, compact: true, onOpen: (n) => go(n.kind === 'matiere' ? `#/m/${n.matiere}` : n.kind === 'contrib' ? `#/a/${n.id}` : `#/n/${n.id}`) });
+  const offThread = mountThread(view.querySelector('.thread-host'), { parent: id, matiere: it.matiere, label: it.title });
+  const adds = view.querySelector('.aside-adds');
+  const paintAdds = () => {
+    if (!adds) return;
+    const n = collab.count(id);
+    adds.hidden = !n;
+    adds.querySelector('span').textContent = `${n} ajout${n > 1 ? 's' : ''} de la classe`;
+  };
+  paintAdds();
+  // The local graph and the counter follow what the class adds, live.
+  let liveTimer = null;
+  const offLive = collab.events.on(() => {
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(() => {
+      graph.setData(localGraph(id));
+      paintAdds();
+    }, 400);
+  });
 
   const bar = view.querySelector('.read-progress');
   const onScroll = () => {
@@ -81,26 +103,39 @@ export async function renderNote(view, { params: [id], query, alive }) {
   let spy = null;
   const cleanup = () => {
     graph.destroy();
+    offThread();
+    offLive();
+    clearTimeout(liveTimer);
     offProgress();
     spy?.disconnect();
     view.removeEventListener('scroll', onScroll);
   };
 
   const prose = view.querySelector('#prose');
+  view.scrollToHeading = (h) => {
+    const target = h && (prose.querySelector(`#${CSS.escape(h)}`) ?? view.querySelector(`#${CSS.escape(h)}`));
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.classList.add('flash');
+    setTimeout(() => target.classList.remove('flash'), 1500);
+  };
   if (it.kind === 'pdf') {
     prose.className = 'file-view';
     prose.innerHTML = `<iframe class="pdf-frame" src="${it.url}" title="${esc(it.title)}"></iframe>
       <p class="muted small mobile-only">Le PDF ne s'affiche pas ? <a href="${it.url}" target="_blank" rel="noopener">Ouvre-le dans un nouvel onglet</a>.</p>`;
+    if (query.get('h')) requestAnimationFrame(() => view.scrollToHeading(query.get('h')));
     return cleanup;
   }
   if (it.kind === 'image') {
     prose.className = 'file-view';
     prose.innerHTML = `<img class="image-view" src="${it.url}" alt="${esc(it.title)}">`;
+    if (query.get('h')) requestAnimationFrame(() => view.scrollToHeading(query.get('h')));
     return cleanup;
   }
   if (it.kind === 'file') {
     prose.className = 'file-view';
     prose.innerHTML = `<a class="card file-card" href="${it.url}" download>${icon('download')}<span><b>${esc(it.name ?? it.title)}.${esc(it.ext)}</b><small>${fmtSize(it.size)} · clique pour télécharger</small></span></a>`;
+    if (query.get('h')) requestAnimationFrame(() => view.scrollToHeading(query.get('h')));
     return cleanup;
   }
 
@@ -135,13 +170,6 @@ export async function renderNote(view, { params: [id], query, alive }) {
     headings.forEach((h) => spy.observe(h));
   }
 
-  view.scrollToHeading = (h) => {
-    const target = h && prose.querySelector(`#${CSS.escape(h)}`);
-    if (!target) return;
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    target.classList.add('flash');
-    setTimeout(() => target.classList.remove('flash'), 1500);
-  };
   if (query.get('h')) requestAnimationFrame(() => view.scrollToHeading(query.get('h')));
   return cleanup;
 }

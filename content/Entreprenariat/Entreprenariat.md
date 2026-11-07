@@ -11,4 +11,4 @@ ordre: 9
 |---|---|---|---|---|---|---|---|
 | Langue et Entreprenariat (`573103550`, transversale) | 1 | 2 | Contrôle continu | 21 h | — | — | 21 h |
 
-Même UE que [[Environnement professionnel]] et [[Anglais 5]].
+Même UE que Environnement professionnel et Anglais 5.

@@ -1,9 +1,9 @@
 import { vault, items, matieres, typeOf, itemIcon, matiereEmoji, cssColor, recent, loadSearch, progress } from './data.js';
 import { THEMES, ACCENTS, applyTheme, current } from './themes.js';
 import { pomodoro } from './pomodoro.js';
-import { radio } from './music.js';
-import { songs } from './songs.js';
 import { ambience, SOUNDS } from './audio.js';
+import { musicApp, openMusicApp } from './bar.js';
+import { collab, contribTitle } from './collab.js';
 import { icon } from './icons.js';
 import { esc, fuzzy, highlight, fold, go, store } from './util.js';
 
@@ -34,6 +34,15 @@ function noteEntries() {
       run: () => go(`#/n/${it.id}`), id: it.id,
     };
   });
+  // What the class added (searchable like the rest).
+  for (const n of collab.enabled ? collab.all() : []) {
+    if (n.deleted || !matieres.has(n.matiere)) continue;
+    out.push({
+      kind: 'note', label: contribTitle(n), sub: `${matieres.get(n.matiere).name} · ajout de ${n.author || 'anonyme'}`,
+      icon: icon(n.kind === 'lien' ? 'link' : 'message'), color: 'var(--pink)',
+      keys: `${n.title} ${n.body.slice(0, 400)} ${n.url} ${n.author} ajout classe`, run: () => go(`#/a/${n.id}`),
+    });
+  }
   for (const c of vault.canvases.filter((c) => !c.auto)) {
     out.push({ kind: 'note', label: c.title, sub: `${matieres.get(c.matiere)?.name ?? 'Général'} · Canvas`, icon: icon('canvas'), color: 'var(--peach)', keys: `${c.title} canvas`, run: () => go(`#/c/${c.id.slice(2)}`) });
   }
@@ -58,13 +67,7 @@ function actionEntries() {
     a(pomodoro.running ? 'Pomodoro : pause' : 'Pomodoro : démarrer', 'timer', () => pomodoro.toggle(), 'timer focus', 'p'),
     a('Pomodoro : réinitialiser', 'reset', () => pomodoro.reset(), 'timer'),
     a('Pomodoro : passer à la suite', 'skip', () => pomodoro.skip(), 'timer'),
-    ...(songs.enabled() ? [a('Chansons : chercher une chanson', 'headphones', () => hooks.openSongs?.(), 'chanson musique youtube music metrolist chercher jouer', 'c')] : []),
-    ...(songs.active && songs.current ? [
-      a(songs.playing ? 'Chanson : pause' : 'Chanson : lecture', 'headphones', () => songs.toggle(), 'musique play pause', 'm'),
-      a('Chanson : suivante', 'skip', () => songs.next(), 'musique next suivant'),
-    ] : []),
-    a(radio.playing ? 'Musique : pause' : 'Musique : lecture', 'music', () => radio.toggle(), 'radio lofi play'),
-    a('Musique : station suivante', 'skip', () => radio.next(), 'radio lofi next'),
+    ...(musicApp() ? [a(`Ouvrir ${musicApp().name ?? 'Metrolist'}`, 'headphones', openMusicApp, 'musique chanson metrolist youtube music', 'm')] : []),
     ...SOUNDS.map((s) => a(`Ambiance : ${s.label}${ambience.isOn(s.id) ? ' (couper)' : ''}`, s.icon, () => ambience.toggle(s.id), 'son bruit ambiance')),
     a('Ambiance : tout couper', 'mute', () => ambience.stopAll(), 'silence son'),
     a('Note au hasard', 'dice', () => {
@@ -107,10 +110,6 @@ function compute() {
       .map((e) => ({ ...e, score: e.match + (kindBoost[e.kind] ?? 0) + (fuzzy(q, e.label) > 0 ? 30 : 0) }))
       .sort((x, y) => y.score - x.score)
       .slice(0, 60);
-    // Type anything and press Enter: plays it (first YouTube Music result).
-    if (q.length >= 2 && songs.enabled() && (mode === 'drun' || mode === 'run')) {
-      entries.push({ kind: 'action', group: 'chansons', label: `Jouer « ${q} »`, sub: 'YouTube Music', icon: icon('headphones'), color: 'var(--accent)', run: () => songs.playQuery(q) });
-    }
     if (q.length >= 3 && (mode === 'drun' || mode === 'notes')) contentSearch(q);
   }
   sel = 0;

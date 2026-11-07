@@ -1,8 +1,6 @@
 import { matieres, matiereEmoji } from '../data.js';
 import { mountTimer, mountSettings, stats, pomodoro } from '../pomodoro.js';
-import { mountMixer, mountRadio } from '../music.js';
-import { songs, mountSongs } from '../songs.js';
-import { ambience } from '../audio.js';
+import { ambience, SOUNDS } from '../audio.js';
 import { color } from '../themes.js';
 import { icon } from '../icons.js';
 import { esc, store, today, reducedMotion } from '../util.js';
@@ -85,6 +83,29 @@ function scene(canvas) {
   };
 }
 
+// Ambient sounds (generated in the browser: rain, fire, waves…).
+function mountMixer(el) {
+  el.innerHTML = SOUNDS.map((s) => `
+    <div class="mixer-row" data-id="${s.id}" style="--c:var(--${s.color})">
+      <button class="mixer-btn" data-toggle="${s.id}" title="${esc(s.label)}">${icon(s.icon)}</button>
+      <div class="mixer-main"><span>${esc(s.label)}</span><input type="range" min="0" max="1" step="0.01" value="${ambience.volumes[s.id]}" data-sound="${s.id}"></div>
+    </div>`).join('') + '<button class="btn sm ghost mixer-off" data-off>tout couper</button>';
+  el.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (b?.dataset.toggle) ambience.toggle(b.dataset.toggle);
+    if (b?.hasAttribute('data-off')) ambience.stopAll();
+  });
+  el.addEventListener('input', (e) => {
+    if (e.target.dataset.sound) ambience.setVolume(e.target.dataset.sound, Number(e.target.value));
+  });
+  const update = () => {
+    el.querySelectorAll('.mixer-row').forEach((row) => row.classList.toggle('on', ambience.isOn(row.dataset.id)));
+    el.querySelector('[data-off]').hidden = !ambience.any();
+  };
+  update();
+  return ambience.events.on(update);
+}
+
 function mountTodos(el) {
   let todos = store.get('todos', []);
   const save = () => store.set('todos', todos);
@@ -147,8 +168,6 @@ export function renderStudy(view) {
       <p class="quote muted">${QUOTES[Math.floor(Math.random() * QUOTES.length)]}</p>
     </section>
     <section class="card"><div class="panel-title">${icon('waves')} ambiance</div><div class="mixer"></div></section>
-    <section class="card"><div class="panel-title">${icon('radio')} radio lofi</div><div class="radio"></div></section>
-    ${songs.enabled() ? `<section class="card"><div class="panel-title">${icon('headphones')} chansons</div><div class="songs-host"></div></section>` : ''}
     <section class="card"><div class="panel-title">${icon('list')} pour cette session</div><div class="todo-host"></div></section>
     <section class="card"><div class="panel-title">${icon('sparkles')} statistiques</div><div class="stats-host"></div></section>
     <details class="card study-settings"><summary class="panel-title">${icon('timer')} réglages du pomodoro ${icon('chevron', 'chev')}</summary><div class="settings-host"></div></details>
@@ -157,8 +176,6 @@ export function renderStudy(view) {
     scene(view.querySelector('.study-bg')),
     mountTimer(view.querySelector('.timer-host')),
     mountMixer(view.querySelector('.mixer')),
-    mountRadio(view.querySelector('.radio')),
-    songs.enabled() ? mountSongs(view.querySelector('.songs-host')) : null,
     mountStats(view.querySelector('.stats-host')),
   ];
   mountTodos(view.querySelector('.todo-host'));

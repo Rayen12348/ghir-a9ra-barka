@@ -2,6 +2,8 @@ import { vault, cssColor, matiereEmoji } from '../data.js';
 import { ForceGraph, graphData } from '../graph.js';
 import { icon } from '../icons.js';
 import { esc, go, store, isMobile } from '../util.js';
+import { collab } from '../collab.js';
+import { quickAdd } from '../contribs.js';
 
 export function renderGraph(view, { query }) {
   view.classList.add('full');
@@ -9,13 +11,14 @@ export function renderGraph(view, { query }) {
   const hiddenM = new Set(store.get('graph.hiddenM', []));
   const hiddenT = new Set(store.get('graph.hiddenT', []));
   let hubs = store.get('graph.hubs', true);
+  let adds = store.get('graph.adds', true);
   let colorBy = store.get('graph.color', 'matiere');
   const collapsed = store.get('graph.panel', isMobile());
 
   view.innerHTML = `<div class="graph-wrap">
     <canvas class="graph-canvas"></canvas>
     <aside class="graph-panel ${collapsed ? 'collapsed' : ''}">
-      <button class="graph-panel-head" data-collapse>${icon('graph')} graphe <span class="muted small">${vault.items.length} notes</span>${icon('chevron', 'chev')}</button>
+      <button class="graph-panel-head" data-collapse>${icon('graph')} graphe <span class="muted small graph-count"></span>${icon('chevron', 'chev')}</button>
       <div class="graph-panel-body">
         <input class="field" type="search" placeholder="surligner…" data-search>
         <div class="panel-sub">matières</div>
@@ -25,6 +28,7 @@ export function renderGraph(view, { query }) {
         <div class="panel-sub">couleur par</div>
         <div class="chips seg"><button class="chip" data-color="matiere">matière</button><button class="chip" data-color="type">type</button></div>
         <label class="switch"><input type="checkbox" data-hubs ${hubs ? 'checked' : ''}><span>nœuds matière</span></label>
+        ${collab.enabled ? `<label class="switch"><input type="checkbox" data-adds ${adds ? 'checked' : ''}><span class="legend-diamond"></span><span>ajouts de la classe</span></label>` : ''}
       </div>
     </aside>
     <div class="jc-controls">
@@ -32,7 +36,7 @@ export function renderGraph(view, { query }) {
       <button class="icon-btn" data-z="out" title="Dézoomer">${icon('minus')}</button>
       <button class="icon-btn" data-z="fit" title="Tout voir">${icon('fit')}</button>
     </div>
-    <div class="jc-hint hide-sm">survol : voisins · glisser un nœud : le déplacer · clic : ouvrir</div>
+    <div class="jc-hint hide-sm">survol : voisins · glisser : déplacer · clic : ouvrir${collab.enabled ? ' · clic droit : ajouter une note ou un lien' : ''}</div>
   </div>`;
 
   const focus = query.get('focus');
@@ -41,16 +45,33 @@ export function renderGraph(view, { query }) {
     ...data,
     focus,
     insetLeft: () => (isMobile() || panel.classList.contains('collapsed') ? 0 : panel.offsetWidth + 14),
-    onOpen: (n) => go(n.kind === 'matiere' ? `#/m/${n.matiere}` : `#/n/${n.id}`),
+    onOpen: (n) => go(n.kind === 'matiere' ? `#/m/${n.matiere}` : n.kind === 'contrib' ? `#/a/${n.id}` : `#/n/${n.id}`),
+    onAdd: collab.enabled ? (n, x, y) => quickAdd({ parent: n.id, matiere: n.matiere, x, y }) : null,
+  });
+  const count = view.querySelector('.graph-count');
+  const paintCount = () => {
+    const a = collab.enabled ? collab.all().filter((n) => !n.deleted).length : 0;
+    count.textContent = `${vault.items.length} notes${a ? ` · ${a} ajouts` : ''}`;
+  };
+  paintCount();
+  // New additions appear live, next to the node they were added to.
+  let liveTimer = null;
+  const offLive = collab.events.on(() => {
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(() => {
+      graph.setData(graphData());
+      paintCount();
+    }, 500);
   });
 
   const apply = () => {
-    graph.setFilter((n) => (n.kind === 'matiere' ? hubs && !hiddenM.has(n.matiere) : !hiddenT.has(n.type) && !hiddenM.has(n.matiere)));
+    graph.setFilter((n) => (n.kind === 'matiere' ? hubs && !hiddenM.has(n.matiere) : n.kind === 'contrib' ? adds && !hiddenM.has(n.matiere) : !hiddenT.has(n.type) && !hiddenM.has(n.matiere)));
     graph.setColorBy(colorBy);
     view.querySelectorAll('[data-color]').forEach((b) => b.classList.toggle('on', b.dataset.color === colorBy));
     store.set('graph.hiddenM', [...hiddenM]);
     store.set('graph.hiddenT', [...hiddenT]);
     store.set('graph.hubs', hubs);
+    store.set('graph.adds', adds);
     store.set('graph.color', colorBy);
   };
   apply();
@@ -83,7 +104,15 @@ export function renderGraph(view, { query }) {
     hubs = e.target.checked;
     apply();
   });
+  view.querySelector('[data-adds]')?.addEventListener('change', (e) => {
+    adds = e.target.checked;
+    apply();
+  });
   view.querySelector('[data-search]').addEventListener('input', (e) => graph.setHighlight(e.target.value));
 
-  return () => graph.destroy();
+  return () => {
+    graph.destroy();
+    offLive();
+    clearTimeout(liveTimer);
+  };
 }

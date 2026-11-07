@@ -46,4 +46,4 @@ Trends: *increase / rise* (hausse) · *decrease / drop* (baisse) · *remain stab
 | *informations, advices* | *information, advice* |
 | *responsible of* | *responsible for* |
 
-Course: [[Chapter 1 - Professional communication]] · practice: [[TP 1 - Job interview practice]] · la version française : [[Résumé - Environnement professionnel]].
+Course: [[Chapter 1 - Professional communication]] · practice: [[TP 1 - Job interview practice]] · la version française : Résumé - Environnement professionnel.

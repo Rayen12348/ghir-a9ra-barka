@@ -5,7 +5,7 @@ tags: [iot, tp, api, rest, fastapi]
 ---
 # TP 8 — Exposer le dispositif via une API REST (FastAPI)
 
-Énoncé complet : [[Fascicule de TP - 12 laboratoires.pdf]], pages 40 à 46 · durée 1 h 30 · cours : [[Résumé - IoT#Module 10 — Architecture d'entreprise et jumeaux numériques|couche intégration & application]] · avant : [[TP 7 - Stocker et analyser avec MongoDB]] · suite : [[TP 9 - AWS IoT Core et DynamoDB]] · voir aussi : [[Chapitre 1 - SOA, SOAP et REST|cours REST]]
+Énoncé complet : [[Fascicule de TP - 12 laboratoires.pdf]], pages 40 à 46 · durée 1 h 30 · cours : [[Résumé - IoT#Module 10 — Architecture d'entreprise et jumeaux numériques|couche intégration & application]] · avant : [[TP 7 - Stocker et analyser avec MongoDB]] · suite : [[TP 9 - AWS IoT Core et DynamoDB]] · voir aussi : cours REST
 
 > [!abstract] En une phrase
 > Une petite **API web** donne accès à la télémétrie (lue dans MongoDB) et permet d'envoyer des commandes au dispositif (via MQTT), à n'importe quelle application qui parle HTTP.

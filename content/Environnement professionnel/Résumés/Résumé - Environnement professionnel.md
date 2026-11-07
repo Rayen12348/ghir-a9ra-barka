@@ -46,4 +46,4 @@ Communication · travail en équipe · autonomie · adaptabilité · gestion du 
 > [!tip] Le bon réflexe
 > Chaque compétence affirmée a **une preuve** : un projet, un stage, un chiffre.
 
-Cours : [[Chapitre 1 - Préparer son insertion professionnelle]] · atelier : [[TP 1 - Atelier CV et profil LinkedIn]] · en anglais : [[Résumé - Anglais professionnel]].
+Cours : [[Chapitre 1 - Préparer son insertion professionnelle]] · atelier : [[TP 1 - Atelier CV et profil LinkedIn]] · en anglais : Résumé - Anglais professionnel.

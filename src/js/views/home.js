@@ -4,6 +4,21 @@ import { stats } from '../pomodoro.js';
 import { icon } from '../icons.js';
 import { esc, store, relTime } from '../util.js';
 import { enhance } from '../enhance.js';
+import { collab, contribTitle } from '../collab.js';
+import { ago, nodeLabel } from '../contribs.js';
+
+function activityRows() {
+  const list = collab.latest(8).filter((n) => matieres.has(n.matiere));
+  if (!list.length) return '<p class="empty small">Ouvre un cours ou un TP et ajoute une note ou un lien : toute la classe le verra ici.</p>';
+  return list.map((n) => {
+    const m = matieres.get(n.matiere);
+    return `<a class="row" href="#/a/${n.id}" style="--c:var(--${m.color})">
+      <span class="row-icon">${icon(n.kind === 'lien' ? 'link' : 'message')}</span>
+      <span class="row-main"><span class="row-title">${esc(contribTitle(n))}</span><span class="row-sub">${esc(n.author || 'anonyme')} · ${ago(n.created)} · ${esc(m.name)} › ${esc(nodeLabel(n.parent))}</span></span>
+      ${n.pending ? `<span class="ct-wait">${icon('clock')}</span>` : ''}
+    </a>`;
+  }).join('');
+}
 
 const ASCII = String.raw`
      ( (
@@ -88,6 +103,11 @@ export function renderHome(view) {
     <h2 class="section-h"><span class="prompt">❯</span> matières</h2>
     <div class="m-grid">${vault.matieres.map(matiereCard).join('') || '<p class="empty">Ajoute un dossier par matière dans <code>content/</code>.</p>'}</div>
 
+    ${collab.enabled ? `<section class="home-activity">
+      <h2 class="section-h"><span class="prompt">❯</span> activité de la classe <span class="count live-count"></span></h2>
+      <div class="rows activity-rows">${activityRows()}</div>
+    </section>` : ''}
+
     <div class="home-cols">
       <section>
         <h2 class="section-h"><span class="prompt">❯</span> reprendre</h2>
@@ -101,6 +121,26 @@ export function renderHome(view) {
   </div>`;
 
   enhance(view.querySelector('.home-note') ?? view, { depth: 1 });
+  let offActivity = () => {};
+  const rows = view.querySelector('.activity-rows');
+  if (rows) {
+    let t = null;
+    const paint = () => {
+      rows.innerHTML = activityRows();
+      const c = view.querySelector('.live-count');
+      c.textContent = collab.state === 'online' && collab.online.total ? `${collab.online.total} en ligne` : '';
+    };
+    paint();
+    const later = () => {
+      clearTimeout(t);
+      t = setTimeout(paint, 300);
+    };
+    const offs = [collab.events.on(later), collab.status.on(later)];
+    offActivity = () => {
+      offs.forEach((f) => f());
+      clearTimeout(t);
+    };
+  }
   const nameEl = view.querySelector('.name');
   nameEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -114,4 +154,5 @@ export function renderHome(view) {
     nameEl.textContent = value || 'toi';
     view.querySelector('.fetch-user b').textContent = (value || 'étudiant').toLowerCase().replace(/\s+/g, '');
   });
+  return offActivity;
 }

@@ -126,7 +126,7 @@ Le contrat d'une API REST se décrit avec **OpenAPI** (anciennement Swagger) ; `
 
 ## Des services aux microservices
 
-Les **microservices** poussent la SOA plus loin : chaque service est **petit**, possède **sa propre base de données**, se déploie seul (souvent dans un conteneur — voir [[Chapitre 1 - Virtualisation et conteneurs]]) et communique par REST ou par messages (voir le [[Applications réparties|intergiciels orientés messages]]). Une **API Gateway** sert de porte d'entrée unique.
+Les **microservices** poussent la SOA plus loin : chaque service est **petit**, possède **sa propre base de données**, se déploie seul (souvent dans un conteneur — voir Chapitre 1 - Virtualisation et conteneurs) et communique par REST ou par messages (voir le intergiciels orientés messages). Une **API Gateway** sert de porte d'entrée unique.
 
 > [!abstract] À retenir
-> SOA = services autonomes + contrats standard + couplage faible. SOAP = XML + WSDL, très outillé. REST = ressources + verbes HTTP + JSON, sans état. Sécuriser avec HTTPS et des jetons (voir le [[Chapitre 1 - Cryptographie et sécurité des applications|cours de sécurité]]). Fiche : [[Résumé - Services Web]].
+> SOA = services autonomes + contrats standard + couplage faible. SOAP = XML + WSDL, très outillé. REST = ressources + verbes HTTP + JSON, sans état. Sécuriser avec HTTPS et des jetons (voir le cours de sécurité). Fiche : [[Résumé - Services Web]].

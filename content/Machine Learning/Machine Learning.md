@@ -19,4 +19,4 @@ ordre: 3
 
 Chaque chapitre a son support (PDF) dans **Cours** et sa fiche détaillée dans **Résumés**, avec des exemples scikit-learn exécutés.
 
-Même UE que [[Sécurité informatique]].
+Même UE que Sécurité informatique.

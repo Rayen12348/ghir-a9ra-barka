@@ -49,4 +49,4 @@ Le cours complet est dans **Cours** ([[Cours - IoT, architecture, cloud et IA.pd
 
 Environnement : Python 3.8 ou plus dans un environnement virtuel, Mosquitto, Docker (MongoDB), un compte AWS pour les TP 9 et 10 (ou l'émulateur local décrit dans ces TP). Les TP s'enchaînent : chacun repart du précédent.
 
-Même UE que [[Analyse de données avec R]].
+Même UE que Analyse de données avec R.

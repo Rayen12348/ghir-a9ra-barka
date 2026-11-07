@@ -10,7 +10,7 @@ tags: [business-model, lean-startup]
 
 ## Étape 1 — Choisir un problème (20 min)
 
-- [ ] Chaque membre propose un problème vécu (université, transport, santé, agriculture…). Une idée de [[PFE]] peut servir de point de départ.
+- [ ] Chaque membre propose un problème vécu (université, transport, santé, agriculture…). Une idée de PFE peut servir de point de départ.
 - [ ] Voter pour un problème et l'écrire en une phrase : « **[cible]** a du mal à **[problème]** parce que **[cause]**. »
 
 ## Étape 2 — Le canevas (45 min)

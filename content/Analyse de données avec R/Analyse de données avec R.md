@@ -11,4 +11,4 @@ ordre: 12
 |---|---|---|---|---|---|---|---|
 | Unité optionnelle (`9999875001`) | 1,5 | 3 | Mixte | 10,5 h | — | 21 h | 31,5 h |
 
-Même UE que [[IoT]].
+Même UE que IoT.

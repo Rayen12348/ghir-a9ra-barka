@@ -48,4 +48,4 @@ Erreurs : `400` requête invalide · `401` non authentifié · `403` interdit ·
 > [!tip] Microservices
 > Un service = une responsabilité, **sa propre** base de données, un déploiement indépendant (conteneur), derrière une **API Gateway**.
 
-Cours : [[Chapitre 1 - SOA, SOAP et REST]] · TP : [[TP 1 - API REST avec Spring Boot]] · sockets et client/serveur : [[Résumé - Séance 2 - Sockets (1)]].
+Cours : [[Chapitre 1 - SOA, SOAP et REST]] · TP : [[TP 1 - API REST avec Spring Boot]] · sockets et client/serveur : Résumé - Séance 2 - Sockets (1).

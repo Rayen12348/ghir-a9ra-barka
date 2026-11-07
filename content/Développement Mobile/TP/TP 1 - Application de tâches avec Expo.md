@@ -62,7 +62,7 @@ npx expo install @react-native-async-storage/async-storage
 
 - [ ] Filtres « toutes / à faire / faites »
 - [ ] Un deuxième écran (Expo Router) avec le détail d'une tâche
-- [ ] Charger des tâches de départ depuis `https://jsonplaceholder.typicode.com/todos?_limit=5`, ou depuis l'API du [[TP 1 - API REST avec Spring Boot|TP de services web]]
+- [ ] Charger des tâches de départ depuis `https://jsonplaceholder.typicode.com/todos?_limit=5`, ou depuis l'API du TP de services web
 
 ## À rendre
 

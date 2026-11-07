@@ -28,7 +28,7 @@ async function rebuild() {
     again = true;
     return;
   }
-  running = build().catch((e) => console.error(`✗ build: ${e.message}`));
+  running = build({ dev: true }).catch((e) => console.error(`✗ build: ${e.message}`));
   await running;
   running = null;
   for (const res of clients) res.write('data: reload\n\n');
@@ -80,7 +80,7 @@ for (const dir of [CONTENT, SRC]) if (fs.existsSync(dir)) fs.watch(dir, { recurs
 fs.watch(path.join(ROOT, 'site.config.json'), onChange(ROOT));
 
 server.listen(PORT, HOST, () => {
-  console.log(`\n  ☕ cozy·class  →  http://localhost:${PORT}`);
+  console.log(`\n  ☕ ghir-a9ra-barka  →  http://localhost:${PORT}`);
   if (HOST === '0.0.0.0') {
     for (const addr of Object.values(os.networkInterfaces()).flat()) {
       if (addr?.family === 'IPv4' && !addr.internal) console.log(`                 →  http://${addr.address}:${PORT}  (réseau local)`);

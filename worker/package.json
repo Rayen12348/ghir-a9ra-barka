@@ -1,0 +1,15 @@
+{
+  "name": "ghir-a9ra-barka-collab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Serveur temps réel de ghir-a9ra-barka : ajouts de la classe sur n'importe quel nœud, présence en ligne.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8790",
+    "deploy": "wrangler deploy",
+    "test": "node test/protocol.mjs && node test/load.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "4.152.0"
+  }
+}
