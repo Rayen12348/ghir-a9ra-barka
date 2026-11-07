@@ -49,4 +49,4 @@ Instructions du Dockerfile : `FROM` · `WORKDIR` · `COPY` · `RUN` · `ENV` · 
 
 Déploiement : **public** · **privé** · **hybride** · **communautaire**.
 
-Cours : [[Chapitre 1 - Virtualisation et conteneurs]] · TP : [[TP 1 - Conteneuriser une application avec Docker]] · même UE : Résumé - Big Data.
+Cours : [[Chapitre 1 - Virtualisation et conteneurs]] · TP : [[TP 1 - Conteneuriser une application avec Docker]] · même UE : Big Data.
