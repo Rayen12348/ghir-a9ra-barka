@@ -924,7 +924,7 @@ Autres usages : industrie (identité des machines, ordres de travail numériques
 
 ## Module 13 — Sécurité avancée et conformité
 
-*PDF p. 128–137 · en pratique : [[TP 6 - Sécuriser MQTT (TLS, mots de passe, ACL)|TP 6]] · voir aussi : Résumé - Sécurité informatique*
+*PDF p. 128–137 · en pratique : [[TP 6 - Sécuriser MQTT (TLS, mots de passe, ACL)|TP 6]] · voir aussi, en Sécurité informatique : Résumé - Chapitre 1 - Notions de base de la sécurité informatique et Résumé - Chapitre 2 - Chiffrement symétrique et modes opératoires*
 
 ### Zero Trust : « Never trust, always verify »
 
