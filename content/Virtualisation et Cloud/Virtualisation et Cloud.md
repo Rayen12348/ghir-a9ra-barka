@@ -2,7 +2,6 @@
 icone: VC
 couleur: sky
 prof: À compléter
-description: Hyperviseurs, conteneurs Docker, Kubernetes, et les modèles du cloud (IaaS, PaaS, SaaS).
 ordre: 6
 ---
 **Virtualisation et Cloud** · code `573103512` · Semestre 5

@@ -2,7 +2,6 @@
 icone: MOB
 couleur: green
 prof: À compléter
-description: Applications Android et iOS avec React Native et Expo — composants, état, navigation, API et stockage.
 ordre: 2
 ---
 **Développement Mobile** · code `573103521` · Semestre 5

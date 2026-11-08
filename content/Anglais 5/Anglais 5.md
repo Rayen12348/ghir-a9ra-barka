@@ -2,10 +2,9 @@
 icone: ANG
 couleur: lavender
 prof: À compléter
-description: Anglais professionnel et technique — emails, réunions, présentations et entretiens d'embauche.
 ordre: 10
 ---
-**Anglais 5** · code `573103551` · Semestre 5 · les notes de cette matière sont en anglais.
+**Anglais 5** · code `573103551` · Semestre 5
 
 | UE | Coef | Crédits | Régime | Cours | TD | TP | Total |
 |---|---|---|---|---|---|---|---|

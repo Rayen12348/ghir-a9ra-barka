@@ -2,7 +2,6 @@
 icone: PRO
 couleur: teal
 prof: À compléter
-description: Préparation à l'environnement professionnel — CV, lettre, LinkedIn, entretiens et codes de l'entreprise.
 ordre: 8
 ---
 **Préparation à l'environnement professionnel** · code `573103553` · Semestre 5

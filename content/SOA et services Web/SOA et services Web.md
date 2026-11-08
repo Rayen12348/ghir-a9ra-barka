@@ -2,7 +2,6 @@
 icone: SOA
 couleur: peach
 prof: À compléter
-description: Architecture orientée services, SOAP/WSDL, API REST, Spring Boot et microservices.
 ordre: 5
 ---
 **Architecture SOA et services Web** · code `573103541` · Semestre 5
