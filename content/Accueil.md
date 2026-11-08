@@ -12,7 +12,6 @@ Tout est rangé **par matière**, puis par type : cours, TD, TP, corrections et 
 | S5 | Cloud & Big Data | [[Virtualisation et Cloud]] · [[Big Data]] | 5 |
 | S5 | Langue et Entreprenariat | [[Environnement professionnel]] · [[Entreprenariat]] · [[Anglais 5]] | 6 |
 | S5 | Unité optionnelle | [[IoT]] · [[Analyse de données avec R]] | 6 |
-| S6 | Projet de fin d'études | [[PFE]] | 30 |
 
 > [!tip] Raccourcis
 > - `Ctrl K` ou `/` — ouvrir le lanceur (chercher une note, une matière, une action)

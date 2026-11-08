@@ -4,7 +4,7 @@
 import { Client, http, rid, sleep } from './client.mjs';
 
 const [CLIENTS = 250, WRITERS = 150, SECONDS = 60] = process.argv.slice(2).map(Number);
-const MATIERES = ['iot', 'machine-learning', 'big-data', 'analyse-de-donnees-avec-r', 'applications-reparties', 'securite-informatique', 'pfe'];
+const MATIERES = ['iot', 'machine-learning', 'big-data', 'analyse-de-donnees-avec-r', 'applications-reparties', 'securite-informatique', 'entreprenariat'];
 const pct = (arr, p) => {
   if (!arr.length) return NaN;
   const s = [...arr].sort((a, b) => a - b);
