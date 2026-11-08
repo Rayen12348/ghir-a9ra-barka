@@ -1,7 +1,11 @@
 // "Chansons": search YouTube and play any song right here, for everyone in the
 // class, without leaving the site. Playback is YouTube's official embedded
-// player, shown in the mini player in the corner (YouTube requires it to stay
-// visible, at least 200 × 200 px), so it keeps playing from page to page.
+// player, inside the mini player in the corner, so it keeps playing from page
+// to page. By default the video is hidden (music only), as Rayen chose on
+// 2026-11-08 knowing YouTube's rules ask for a visible player of at least
+// 200 × 200 px: "music": { "video": true } in site.config.json shows it again.
+// When a browser refuses to start a hidden player (iPhone), the video appears
+// with "touche la vidéo" until the song plays.
 // After a song, similar songs follow (YouTube's own radio for that song).
 //   - search: the class server (worker/, YouTube Data API, shared daily quota);
 //   - a pasted YouTube / YouTube Music link (song or playlist) plays directly,
@@ -138,6 +142,7 @@ function onState(s) {
   state = s;
   if (s === 1) {
     songs.loading = false;
+    songs.needsTap = false;
     failures = 0;
     const t = songs.current;
     if (t && !t.duration) t.duration = Math.round(player.getDuration() || 0);
@@ -162,6 +167,10 @@ function onError(code) {
 async function playlistIds(list) {
   const p = await getPlayer();
   cueing = true;
+  // Cueing stops the current video: show "chargement…" until the next song plays.
+  state = -1;
+  songs.loading = true;
+  songs.emit();
   try {
     const done = new Promise((resolve) => {
       cued = resolve;
@@ -201,6 +210,13 @@ async function load(mine = ++seq) {
     if (mine !== seq) return;
     p.loadVideoById(t.id);
     startTicker();
+    // Still not started a few seconds later: this browser wants a tap on the video itself.
+    setTimeout(() => {
+      if (mine === seq && songs.active && state !== 1 && state !== 3) {
+        songs.needsTap = true;
+        songs.emit();
+      }
+    }, 4500);
   } catch (e) {
     songs.loading = false;
     toast(e.message, { icon: icon('headphones') });
@@ -213,6 +229,8 @@ export const songs = {
   events: emitter(), // state changes (results, track, play/pause)
   tick: emitter(), // playback position (twice a second)
   enabled: () => vault.site?.music !== false,
+  showVideo: () => vault.site?.music?.video === true,
+  needsTap: false, // the browser blocked the hidden player: show the video to be tapped
   query: store.get('songs.query', ''),
   results: [],
   status: 'idle', // idle | searching | error
@@ -387,6 +405,7 @@ export const songs = {
     ++seq;
     player?.stopVideo?.();
     state = -1;
+    this.needsTap = false;
     this.active = false;
     this.loading = false;
     this.emit();
@@ -522,7 +541,9 @@ export function mountDock(el) {
   el.hidden = true;
   el.innerHTML = `
     <div class="dock-video"></div>
+    <p class="dock-tap">Touche la vidéo pour lancer la musique.</p>
     <div class="dock-body">
+      <img class="dock-art" alt="" referrerpolicy="no-referrer">
       <div class="dock-info" data-act="open" title="Ouvrir les chansons"><div class="dock-title"></div><div class="dock-sub"></div></div>
       <button class="icon-btn" data-act="prev" title="Précédente">${icon('prev')}</button>
       <button class="icon-btn accent" data-act="toggle"></button>
@@ -531,6 +552,8 @@ export function mountDock(el) {
     </div>
     <div class="dock-progress"><i></i></div>`;
   host = el.querySelector('.dock-video');
+  const art = el.querySelector('.dock-art');
+  el.classList.toggle('show-video', songs.showVideo());
   const bar = el.querySelector('.dock-progress i');
   el.addEventListener('click', (e) => {
     const act = e.target.closest('[data-act]')?.dataset.act;
@@ -543,6 +566,11 @@ export function mountDock(el) {
     el.hidden = !songs.active;
     if (!songs.active) return;
     el.classList.toggle('playing', songs.playing);
+    el.classList.toggle('needs-tap', songs.needsTap);
+    if (song && art.dataset.id !== song.id) {
+      art.dataset.id = song.id;
+      art.src = cover(song).replaceAll('&amp;', '&');
+    }
     el.querySelector('.dock-title').textContent = song?.title || 'chargement…';
     el.querySelector('.dock-sub').textContent = songs.loading ? 'chargement…' : artists(song);
     el.querySelector('[data-act="toggle"]').innerHTML = icon(songs.playing ? 'pause' : 'play');

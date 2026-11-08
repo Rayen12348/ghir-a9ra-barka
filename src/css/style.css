@@ -845,10 +845,18 @@ details.callout[open] > summary::after { transform: rotate(90deg); }
 .song-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .12em; color: var(--overlay1); margin: 2px 2px 4px; }
 .song-msg { display: grid; gap: 8px; justify-items: start; padding: 6px 2px; margin: 0; }
 .song-msg p { margin: 0; line-height: 1.5; }
-/* The YouTube player must stay visible (at least 200 × 200 px) and never be covered: it sits above the popovers. */
-.dock { position: fixed; right: calc(var(--gap) * 2.5); bottom: calc(var(--gap) * 2.5); width: 356px; z-index: 65; overflow: hidden; animation: rise .3s var(--ease); }
-.dock-video { aspect-ratio: 16 / 9; min-height: 200px; background: #000; }
+/* Music only by default: the YouTube player keeps its normal size but is clipped to nothing.
+   .show-video ("music": { "video": true }) or .needs-tap (a browser that wants a tap on the video) shows it,
+   then at least 200 × 200 px and above the popovers, as YouTube asks. */
+.dock { position: fixed; right: calc(var(--gap) * 2.5); bottom: calc(var(--gap) * 2.5); width: 310px; z-index: 40; overflow: hidden; animation: rise .3s var(--ease); }
+.dock-video { position: absolute; left: 0; top: 0; width: 356px; height: 200px; opacity: 0; clip-path: inset(50%); pointer-events: none; }
 .dock-video > *, .dock-video iframe { display: block; width: 100%; height: 100%; border: 0; }
+.dock.show-video, .dock.needs-tap { width: 356px; z-index: 65; }
+.dock.show-video .dock-video, .dock.needs-tap .dock-video { position: static; width: 100%; height: auto; aspect-ratio: 16 / 9; min-height: 200px; opacity: 1; clip-path: none; pointer-events: auto; background: #000; }
+.dock-tap { display: none; margin: 0; padding: 8px 12px 0; font-size: 12px; color: var(--accent); }
+.dock.needs-tap .dock-tap { display: block; }
+.dock-art { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; margin-right: 8px; flex-shrink: 0; background: var(--surface0); }
+.dock.show-video .dock-art, .dock.needs-tap .dock-art { display: none; }
 .dock::before { opacity: 1; }
 .dock-body { display: flex; align-items: center; gap: 4px; padding: 8px 8px 8px 12px; }
 .dock-info { flex: 1; min-width: 0; cursor: pointer; }
@@ -995,7 +1003,8 @@ details.callout[open] > summary::after { transform: rotate(90deg); }
   .note-aside .toc-wrap { display: none; }
 }
 @media (max-width: 860px) {
-  .dock { left: auto; right: var(--gap); bottom: var(--gap); width: min(356px, calc(100vw - var(--gap) * 2)); }
+  .dock { left: var(--gap); right: var(--gap); bottom: var(--gap); width: auto; }
+  .dock.show-video, .dock.needs-tap { left: auto; width: min(356px, calc(100vw - var(--gap) * 2)); }
   :root { --gap: 8px; --bar-h: 46px; }
   .hide-sm { display: none !important; }
   .show-sm { display: flex !important; }

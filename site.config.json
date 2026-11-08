@@ -5,7 +5,7 @@
   "theme": "mocha",
   "accent": "mauve",
   "wallpaper": null,
-  "music": true,
+  "music": { "video": false },
   "collab": {
     "url": "https://ghir-a9ra-barka-collab.ghir-a9ra-barka.workers.dev"
   },
