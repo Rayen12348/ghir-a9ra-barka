@@ -497,7 +497,7 @@ export function mountSongs(el, { autofocus = false } = {}) {
     } else if (songs.active && songs.queue.length > songs.index + 1) {
       list.innerHTML = `<div class="song-label">à suivre</div>${songs.queue.map((t, i) => (i > songs.index && i <= songs.index + 8 ? row(t, i, 'queue') : '')).join('')}`;
     } else if (songs.active) {
-      list.innerHTML = '<p class="muted small song-msg">Ensuite : des chansons similaires (radio YouTube).</p>';
+      list.innerHTML = '<p class="muted small song-msg">Ensuite : des chansons similaires.</p>';
     } else {
       list.innerHTML = `<p class="muted small song-msg">Cherche n’importe quelle chanson puis appuie sur Entrée : elle se joue ici, et des chansons similaires suivent.</p>${tip}`;
     }

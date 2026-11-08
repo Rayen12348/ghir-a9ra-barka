@@ -59,7 +59,7 @@ function pomoPanel(el, keep) {
 
 // Music: the "chansons" panel plays any song right here (YouTube's embedded player, in the mini player).
 function songsPanel(el, keep) {
-  el.innerHTML = `<div class="pop-title">${icon('headphones')} chansons <span class="pop-sub">YouTube</span></div><div class="songs-host"></div>`;
+  el.innerHTML = `<div class="pop-title">${icon('headphones')} chansons</div><div class="songs-host"></div>`;
   keep(mountSongs(el.querySelector('.songs-host'), { autofocus: true }));
 }
 

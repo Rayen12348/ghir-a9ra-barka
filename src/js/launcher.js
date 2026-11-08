@@ -113,7 +113,7 @@ function compute() {
       .slice(0, 60);
     // Type anything and press Enter: plays it (first YouTube Music result).
     if (q.length >= 2 && songs.enabled() && (mode === 'drun' || mode === 'run')) {
-      entries.push({ kind: 'action', group: 'chansons', label: `Jouer « ${q} »`, sub: 'YouTube', icon: icon('headphones'), color: 'var(--accent)', run: () => songs.playQuery(q) });
+      entries.push({ kind: 'action', group: 'chansons', label: `Jouer « ${q} »`, sub: 'chansons', icon: icon('headphones'), color: 'var(--accent)', run: () => songs.playQuery(q) });
     }
     if (q.length >= 3 && (mode === 'drun' || mode === 'notes')) contentSearch(q);
   }
