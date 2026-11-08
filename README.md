@@ -1,6 +1,6 @@
 # ghir-a9ra-barka
 
-A study site for the class: every matière with its cours, TD, TP, corrections and résumés. It works like Obsidian (graph view, canvas boards, wikilinks) and has a study room with a pomodoro timer and ambient sounds. Anyone in the class can add notes and links to any page, live for everyone (see [Ajouts de la classe](#ajouts-de-la-classe-live)). The look borrows from riced Linux desktops (rofi/waybar style, Catppuccin and friends).
+A study site for the class: every matière with its cours, TD, TP, corrections and résumés. It works like Obsidian (graph view, canvas boards, wikilinks) and has a study room with a pomodoro timer, and a music player that works for everyone in the class. Anyone in the class can add notes and links to any page, live for everyone (see [Ajouts de la classe](#ajouts-de-la-classe-live)). The look borrows from riced Linux desktops (rofi/waybar style, Catppuccin and friends).
 
 **The `content/` folder is an Obsidian vault.** You write notes and drop PDFs in Obsidian, then rebuild, and the site shows them.
 
@@ -80,16 +80,14 @@ Each matière gets an auto-generated **carte** (canvas) laid out by type. Any `.
 - `theme` / `accent`: defaults for first-time visitors (`mocha`, `macchiato`, `latte`, `rose-pine`, `dawn`, `tokyo-night`, `gruvbox`, `nord`, `everforest`)
 - `wallpaper`: a path inside `content/` (e.g. `_assets/wall.jpg`) or a URL
 - `pomodoro`: default durations in minutes
-- `musicApp`: turns on the **chansons** panel (headphones icon in the top bar, `c`; `m` plays / pauses). Remove the key to hide it.
-  ```json
-  "musicApp": { "name": "Metrolist", "url": "http://localhost:4747", "android": "com.metrolist.music", "fallback": "https://music.youtube.com/" }
-  ```
-  Search any song and it plays right here, on the site, while you keep studying: it carries on from page to page (mini player in the corner), and similar songs follow. The study room has the same panel; in the launcher (`ctrl k`), type a song and pick « Jouer … ».
-  - Search and audio come from [Metrolist Web](https://github.com/MetrolistGroup/Metrolist) (`url`), a small app in `~/Projects/metrolist` that must run on the same computer (a website alone can't reach YouTube Music). `~/Projects/metrolist/scripts/install-desktop.sh --service` starts it at every login. Chrome may ask once whether the site may access apps on your device: allow it.
-  - On a phone there is no Metrolist Web, so the panel says so and offers to open the Metrolist app on Android (`android` is its package name) or `fallback` on iPhone.
+- `music`: the **chansons** panel (headphones icon in the top bar, `c`; `m` plays / pauses), on by default; `"music": false` hides it.
+  Search any song and it plays right here, for everyone in the class, on a computer or a phone, while you keep studying: it carries on from page to page (mini player in the corner), and similar songs follow. The study room has the same panel; in the launcher (`ctrl k`), type a song and pick « Jouer … ».
+  - Playback is YouTube's official embedded player, shown in the mini player. YouTube's rules require it to stay visible (at least 200 × 200 px) and never covered, so the mini player sits above the popovers; × stops the song.
+  - After a song, YouTube's own radio for it plays (similar songs). A pasted YouTube or YouTube Music link (a song or a playlist) plays directly. Neither needs a key or uses any quota.
+  - Search goes through the additions server (`collab`, `GET /api/music/search`), which calls the YouTube Data API with the secret `YOUTUBE_API_KEY` (see below). Without the key, the panel asks for a link instead. The free quota (10 000 units a day, 101 per search) allows about 95 new searches a day for the whole class; a search already made is answered from the server's copy for 24 h, and the count resets at midnight Pacific time (9 h in Tunisia in winter, 8 h in summer).
+  - Searching only happens on Entrée, never while typing, so the quota isn't spent letter by letter.
 - `collab`: `{ "url": "https://…workers.dev" }`, the address of the additions server (next section). Without it, the site has no additions.
 
-The ambient sounds of the study room (rain, fire, waves, wind, brown noise) are generated in the browser, so there are no audio files to host.
 
 ## Ajouts de la classe (live)
 
@@ -128,6 +126,7 @@ Optional secrets, set from `worker/`:
 |---|---|
 | `npx wrangler secret put ADMIN_KEY` | moderation key: type it in the online pill → *modération* to delete any addition; also needed for backups |
 | `npx wrangler secret put CLASS_CODE` | a code students type once before they can add anything (reading stays open to all) |
+| `npx wrangler secret put YOUTUBE_API_KEY` | turns on song search in the chansons panel. Free key: [console.cloud.google.com](https://console.cloud.google.com/) → new project → *APIs & Services* → enable **YouTube Data API v3** → *Credentials* → *Create credentials* → *API key* (restrict it to that API) |
 
 `ALLOWED_ORIGINS` in `worker/wrangler.jsonc` lists the sites allowed to use the server (the GitHub Pages address and localhost). Change it if the site moves.
 
@@ -170,7 +169,7 @@ src/                the site itself (vanilla JS modules, no framework)
   js/views/         home, matière, note, addition, graph, canvas, study room
   js/graph.js       force-directed graph · js/jcanvas.js  JSON Canvas renderer
   js/collab.js      additions: cache, outbox, live connection · js/contribs.js  their UI
-  js/songs.js       chansons panel + mini player (through Metrolist Web) · js/audio.js  ambient sound synth
+  js/songs.js       chansons panel + mini player (YouTube's embedded player) · js/audio.js  pomodoro chime
   sw.js             offline copy of the site (the build fills in the file list)
   css/style.css     everything visual
 worker/             the additions server (Cloudflare Worker + Durable Object) and its tests

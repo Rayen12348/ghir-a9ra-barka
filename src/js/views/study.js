@@ -1,6 +1,5 @@
 import { matieres, matiereEmoji } from '../data.js';
 import { mountTimer, mountSettings, stats, pomodoro } from '../pomodoro.js';
-import { ambience, SOUNDS } from '../audio.js';
 import { songs, mountSongs } from '../songs.js';
 import { color } from '../themes.js';
 import { icon } from '../icons.js';
@@ -15,11 +14,11 @@ const QUOTES = [
   'La régularité bat l’intensité.',
 ];
 
-// Background scene: rain when it rains, embers by the fire, drifting dust otherwise.
+// Background scene: slowly drifting dust.
 function scene(canvas) {
   const ctx = canvas.getContext('2d');
   let w = 0, h = 0, raf = 0;
-  const drops = [], embers = [], dust = [];
+  const dust = [];
   const resize = () => {
     const dpr = window.devicePixelRatio || 1;
     w = canvas.clientWidth;
@@ -35,36 +34,6 @@ function scene(canvas) {
 
   const frame = (time) => {
     ctx.clearRect(0, 0, w, h);
-    const rain = ambience.isOn('pluie');
-    const fire = ambience.isOn('feu');
-    if (rain && drops.length < 140) for (let i = 0; i < 4; i++) drops.push({ x: Math.random() * (w + 200), y: -20, v: 7 + Math.random() * 6, l: 10 + Math.random() * 16 });
-    if (fire && embers.length < 50 && Math.random() < 0.35) embers.push({ x: w * (0.2 + Math.random() * 0.6), y: h + 5, v: 0.4 + Math.random() * 1.1, life: 1, p: Math.random() * 6 });
-
-    ctx.strokeStyle = color('sky');
-    ctx.lineWidth = 1.2;
-    for (let i = drops.length - 1; i >= 0; i--) {
-      const d = drops[i];
-      d.y += d.v;
-      d.x -= d.v * 0.25;
-      ctx.globalAlpha = 0.25;
-      ctx.beginPath();
-      ctx.moveTo(d.x, d.y);
-      ctx.lineTo(d.x + d.l * 0.25, d.y - d.l);
-      ctx.stroke();
-      if (d.y > h + 20) drops.splice(i, 1);
-    }
-    for (let i = embers.length - 1; i >= 0; i--) {
-      const e = embers[i];
-      e.y -= e.v;
-      e.x += Math.sin(time / 600 + e.p) * 0.5;
-      e.life -= 0.0035;
-      ctx.globalAlpha = Math.max(0, e.life) * 0.8;
-      ctx.fillStyle = e.life > 0.5 ? color('yellow') : color('peach');
-      ctx.beginPath();
-      ctx.arc(e.x, e.y, 1.8, 0, Math.PI * 2);
-      ctx.fill();
-      if (e.life <= 0) embers.splice(i, 1);
-    }
     ctx.fillStyle = color('text');
     for (const d of dust) {
       d.y -= d.s / h * 4;
@@ -82,29 +51,6 @@ function scene(canvas) {
     cancelAnimationFrame(raf);
     ro.disconnect();
   };
-}
-
-// Ambient sounds (generated in the browser: rain, fire, waves…).
-function mountMixer(el) {
-  el.innerHTML = SOUNDS.map((s) => `
-    <div class="mixer-row" data-id="${s.id}" style="--c:var(--${s.color})">
-      <button class="mixer-btn" data-toggle="${s.id}" title="${esc(s.label)}">${icon(s.icon)}</button>
-      <div class="mixer-main"><span>${esc(s.label)}</span><input type="range" min="0" max="1" step="0.01" value="${ambience.volumes[s.id]}" data-sound="${s.id}"></div>
-    </div>`).join('') + '<button class="btn sm ghost mixer-off" data-off>tout couper</button>';
-  el.addEventListener('click', (e) => {
-    const b = e.target.closest('button');
-    if (b?.dataset.toggle) ambience.toggle(b.dataset.toggle);
-    if (b?.hasAttribute('data-off')) ambience.stopAll();
-  });
-  el.addEventListener('input', (e) => {
-    if (e.target.dataset.sound) ambience.setVolume(e.target.dataset.sound, Number(e.target.value));
-  });
-  const update = () => {
-    el.querySelectorAll('.mixer-row').forEach((row) => row.classList.toggle('on', ambience.isOn(row.dataset.id)));
-    el.querySelector('[data-off]').hidden = !ambience.any();
-  };
-  update();
-  return ambience.events.on(update);
 }
 
 function mountTodos(el) {
@@ -169,7 +115,6 @@ export function renderStudy(view) {
       <p class="quote muted">${QUOTES[Math.floor(Math.random() * QUOTES.length)]}</p>
     </section>
     ${songs.enabled() ? `<section class="card"><div class="panel-title">${icon('headphones')} chansons</div><div class="songs-host"></div></section>` : ''}
-    <section class="card"><div class="panel-title">${icon('waves')} ambiance</div><div class="mixer"></div></section>
     <section class="card"><div class="panel-title">${icon('list')} pour cette session</div><div class="todo-host"></div></section>
     <section class="card"><div class="panel-title">${icon('sparkles')} statistiques</div><div class="stats-host"></div></section>
     <details class="card study-settings"><summary class="panel-title">${icon('timer')} réglages du pomodoro ${icon('chevron', 'chev')}</summary><div class="settings-host"></div></details>
@@ -177,7 +122,6 @@ export function renderStudy(view) {
   const offs = [
     scene(view.querySelector('.study-bg')),
     mountTimer(view.querySelector('.timer-host')),
-    mountMixer(view.querySelector('.mixer')),
     songs.enabled() ? mountSongs(view.querySelector('.songs-host')) : null,
     mountStats(view.querySelector('.stats-host')),
   ];

@@ -10,6 +10,7 @@
 //   POST /api/op                  → { node } | { error }       (same ops as the socket)
 //   GET  /api/ws                  → WebSocket (below)
 //   GET  /api/export?admin=<key>  → every row, for backups
+//   GET  /api/music/search?q=     → { items, left, resetAt } | { error, code }   (songs, see MUSIC)
 //
 // WebSocket messages (JSON, plus the text heartbeat 'ping' → 'pong'):
 //   → { t: 'hello', cid, page, since }   then ← { t: 'change', nodes } … ← { t: 'synced', v, epoch, needsCode, online }
@@ -26,6 +27,33 @@ const LIMITS = {
 // Token buckets: per browser (cid) and per IP. A whole class on campus Wi-Fi
 // often shares one public IP, so the IP bucket is only a backstop.
 const RATE = { client: { size: 12, perSec: 1 / 4 }, ip: { size: 900, perSec: 30 } };
+
+// Song search for the "chansons" panel: the official YouTube Data API v3 (secret
+// YOUTUBE_API_KEY). Its free quota is 10 000 units a day, shared by the whole
+// class, and one search costs 101 (search.list 100 + videos.list 1). So results
+// are kept a day, searches are capped per day, and each IP has a small bucket.
+// The quota resets at midnight Pacific time.
+const MUSIC = { daily: 95, results: 12, keepMs: 24 * 3600e3, rate: { size: 20, perSec: 1 / 120 } };
+const ptParts = (t) => Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+}).formatToParts(t).map((p) => [p.type, p.value]));
+const ptDay = (t = Date.now()) => {
+  const p = ptParts(t);
+  return Number(`${p.year}${p.month}${p.day}`);
+};
+const nextQuotaReset = (t = Date.now()) => {
+  const p = ptParts(t);
+  return t - (t % 1000) - (Number(p.hour) * 3600 + Number(p.minute) * 60 + Number(p.second)) * 1000 + 86400e3;
+};
+const unescapeHtml = (s) => String(s ?? '').replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (m, e) => {
+  const named = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" }[e.toLowerCase()];
+  if (named) return named;
+  return String.fromCodePoint(e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1)));
+});
+const isoSeconds = (d) => {
+  const m = /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(d ?? '');
+  return m ? ((Number(m[1] ?? 0) * 24 + Number(m[2] ?? 0)) * 60 + Number(m[3] ?? 0)) * 60 + Number(m[4] ?? 0) : 0;
+};
 
 const enc = new TextEncoder();
 async function sha256(s) {
@@ -119,6 +147,7 @@ export class ClassRoom extends DurableObject {
     this.sql.exec('CREATE INDEX IF NOT EXISTS nodes_v ON nodes (v)');
     this.sql.exec('CREATE INDEX IF NOT EXISTS nodes_parent ON nodes (parent)');
     this.sql.exec('CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, n INTEGER NOT NULL)');
+    this.sql.exec('CREATE TABLE IF NOT EXISTS music_cache (q TEXT PRIMARY KEY, body TEXT NOT NULL, at INTEGER NOT NULL)');
     this.v = this.sql.exec("SELECT n FROM meta WHERE k = 'v'").toArray()[0]?.n ?? 0;
     // A random number that changes only if the database is ever wiped: browsers
     // holding a cache from an older database then start over instead of mixing both.
@@ -167,6 +196,8 @@ export class ClassRoom extends DurableObject {
           }
           return json({ node: await this.apply(msg, ip) });
         }
+        case '/api/music/search':
+          return await this.musicSearch(url.searchParams.get('q'), ip);
         case '/api/export': {
           if (!this.isAdmin(url.searchParams.get('admin'))) return json({ error: 'clé admin requise' }, 403);
           return json({ v: this.v, exportedAt: new Date().toISOString(), nodes: this.sql.exec(`SELECT ${COLS} FROM nodes ORDER BY v`).toArray().map(publicNode) });
@@ -178,6 +209,75 @@ export class ClassRoom extends DurableObject {
       if (e instanceof OpError) return json({ error: e.message, retry: e.retry }, e.status);
       console.error(e);
       return json({ error: 'erreur du serveur', retry: true }, 500);
+    }
+  }
+
+  // ── Song search (YouTube Data API) ─────────────────────────────────
+  meta(k) {
+    return this.sql.exec('SELECT n FROM meta WHERE k = ?', k).toArray()[0]?.n ?? 0;
+  }
+
+  setMeta(k, n) {
+    this.sql.exec('INSERT INTO meta (k, n) VALUES (?, ?) ON CONFLICT (k) DO UPDATE SET n = excluded.n', k, n);
+  }
+
+  // Searches already made today by the class (reset at midnight Pacific time).
+  musicUsed() {
+    if (this.meta('music_day') !== ptDay()) {
+      this.setMeta('music_day', ptDay());
+      this.setMeta('music_used', 0);
+    }
+    return this.meta('music_used');
+  }
+
+  async musicSearch(raw, ip) {
+    const q = String(raw ?? '').replace(/\s+/g, ' ').trim().slice(0, 100);
+    if (!q) return json({ items: [] });
+    const key = q.toLowerCase();
+    const now = Date.now();
+    const kept = this.sql.exec('SELECT body, at FROM music_cache WHERE q = ?', key).toArray()[0];
+    const resetAt = nextQuotaReset(now);
+    if (kept && now - kept.at < MUSIC.keepMs) return json({ ...JSON.parse(kept.body), left: Math.max(0, MUSIC.daily - this.musicUsed()), resetAt, cached: true });
+
+    if (!this.env.YOUTUBE_API_KEY) return json({ error: 'La recherche n’est pas encore activée sur ce site. Colle plutôt un lien YouTube ou YouTube Music : il se joue ici.', code: 'no-key' }, 503);
+    if (this.musicUsed() >= MUSIC.daily) return json({ error: 'Les recherches du jour sont épuisées pour toute la classe.', code: 'quota', resetAt }, 429);
+    if (!this.take(`music:${ip}`, MUSIC.rate)) return json({ error: 'Trop de recherches d’un coup : attends un peu.', code: 'rate' }, 429);
+
+    const base = String(this.env.YT_API_BASE || 'https://www.googleapis.com/youtube/v3').replace(/\/+$/, '');
+    const keyParam = `key=${encodeURIComponent(this.env.YOUTUBE_API_KEY)}`;
+    const region = this.env.MUSIC_REGION || 'TN';
+    const call = async (path) => {
+      const res = await fetch(`${base}/${path}&${keyParam}`);
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) return data;
+      const reason = data?.error?.errors?.[0]?.reason ?? '';
+      if (/quota|dailyLimit/i.test(reason)) {
+        this.setMeta('music_used', MUSIC.daily);
+        throw Object.assign(new Error('quota'), { quota: true });
+      }
+      console.error('YouTube Data API', res.status, reason, data?.error?.message);
+      throw new Error(reason || `YouTube ${res.status}`);
+    };
+    try {
+      this.setMeta('music_used', this.musicUsed() + 1);
+      const found = await call(`search?part=snippet&type=video&videoEmbeddable=true&videoSyndicated=true&videoCategoryId=10&regionCode=${region}&maxResults=${MUSIC.results}&q=${encodeURIComponent(q)}`);
+      const snippets = (found.items ?? []).filter((it) => it.id?.videoId);
+      const ids = snippets.map((it) => it.id.videoId);
+      const details = ids.length ? await call(`videos?part=contentDetails&id=${ids.join(',')}`) : { items: [] };
+      const durations = new Map((details.items ?? []).map((v) => [v.id, isoSeconds(v.contentDetails?.duration)]));
+      const items = snippets.map((it) => ({
+        id: it.id.videoId,
+        title: unescapeHtml(it.snippet.title),
+        artists: [{ name: unescapeHtml(it.snippet.channelTitle).replace(/ - Topic$/, '') }],
+        thumb: it.snippet.thumbnails?.medium?.url ?? it.snippet.thumbnails?.default?.url ?? '',
+        duration: durations.get(it.id.videoId) ?? 0,
+      }));
+      this.sql.exec('INSERT INTO music_cache (q, body, at) VALUES (?, ?, ?) ON CONFLICT (q) DO UPDATE SET body = excluded.body, at = excluded.at', key, JSON.stringify({ items }), now);
+      this.sql.exec('DELETE FROM music_cache WHERE at < ?', now - 3 * MUSIC.keepMs);
+      return json({ items, left: Math.max(0, MUSIC.daily - this.musicUsed()), resetAt });
+    } catch (e) {
+      if (e.quota) return json({ error: 'Les recherches du jour sont épuisées pour toute la classe.', code: 'quota', resetAt }, 429);
+      return json({ error: 'YouTube ne répond pas pour l’instant, réessaie.', code: 'youtube' }, 502);
     }
   }
 

@@ -5,12 +5,7 @@
   "theme": "mocha",
   "accent": "mauve",
   "wallpaper": null,
-  "musicApp": {
-    "name": "Metrolist",
-    "url": "http://localhost:4747",
-    "android": "com.metrolist.music",
-    "fallback": "https://music.youtube.com/"
-  },
+  "music": true,
   "collab": {
     "url": "https://ghir-a9ra-barka-collab.ghir-a9ra-barka.workers.dev"
   },

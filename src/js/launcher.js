@@ -1,7 +1,6 @@
 import { vault, items, matieres, typeOf, itemIcon, matiereEmoji, cssColor, recent, loadSearch, progress } from './data.js';
 import { THEMES, ACCENTS, applyTheme, current } from './themes.js';
 import { pomodoro } from './pomodoro.js';
-import { ambience, SOUNDS } from './audio.js';
 import { songs } from './songs.js';
 import { collab, contribTitle } from './collab.js';
 import { icon } from './icons.js';
@@ -67,13 +66,11 @@ function actionEntries() {
     a(pomodoro.running ? 'Pomodoro : pause' : 'Pomodoro : démarrer', 'timer', () => pomodoro.toggle(), 'timer focus', 'p'),
     a('Pomodoro : réinitialiser', 'reset', () => pomodoro.reset(), 'timer'),
     a('Pomodoro : passer à la suite', 'skip', () => pomodoro.skip(), 'timer'),
-    ...(songs.enabled() ? [a('Chansons : chercher une chanson', 'headphones', () => hooks.openSongs?.(), 'chanson musique youtube music metrolist chercher jouer', 'c')] : []),
+    ...(songs.enabled() ? [a('Chansons : chercher une chanson', 'headphones', () => hooks.openSongs?.(), 'chanson musique youtube music metrolist chercher jouer lien', 'c')] : []),
     ...(songs.active && songs.current ? [
       a(songs.playing ? 'Chanson : pause' : 'Chanson : lecture', 'headphones', () => songs.toggle(), 'musique play pause', 'm'),
       a('Chanson : suivante', 'skip', () => songs.next(), 'musique next suivant'),
     ] : []),
-    ...SOUNDS.map((s) => a(`Ambiance : ${s.label}${ambience.isOn(s.id) ? ' (couper)' : ''}`, s.icon, () => ambience.toggle(s.id), 'son bruit ambiance')),
-    a('Ambiance : tout couper', 'mute', () => ambience.stopAll(), 'silence son'),
     a('Note au hasard', 'dice', () => {
       const pool = vault.items.filter((i) => !progress.has(i.id));
       const pick = (pool.length ? pool : vault.items)[Math.floor(Math.random() * (pool.length || vault.items.length))];
@@ -116,7 +113,7 @@ function compute() {
       .slice(0, 60);
     // Type anything and press Enter: plays it (first YouTube Music result).
     if (q.length >= 2 && songs.enabled() && (mode === 'drun' || mode === 'run')) {
-      entries.push({ kind: 'action', group: 'chansons', label: `Jouer « ${q} »`, sub: 'YouTube Music', icon: icon('headphones'), color: 'var(--accent)', run: () => songs.playQuery(q) });
+      entries.push({ kind: 'action', group: 'chansons', label: `Jouer « ${q} »`, sub: 'YouTube', icon: icon('headphones'), color: 'var(--accent)', run: () => songs.playQuery(q) });
     }
     if (q.length >= 3 && (mode === 'drun' || mode === 'notes')) contentSearch(q);
   }
