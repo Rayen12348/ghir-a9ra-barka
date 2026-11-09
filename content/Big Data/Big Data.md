@@ -21,6 +21,16 @@ Le cours complet s'intitule **Big Data avec Python** : données à grande échel
 
 Chaque partie a son support (PDF) dans **Cours** et sa fiche détaillée dans **Résumés**, avec les calculs, les commandes et le code vérifiés (WordCount et commandes HDFS exécutés avec Hadoop 3.4.3). Le support de la partie 1 commence par un rappel du chapitre 1 (diapositives 1 à 5).
 
+## Travaux pratiques
+
+| TP | Sujet | Correction |
+|---|---|---|
+| TP 1 — Initiation à Hadoop | préparer la VM Cloudera, manipuler HDFS (`hadoop fs`) sur le fichier de ventes `purchases.txt` | [[Correction TP 1 - Initiation à Hadoop]] |
+| TP 2 — Premier programme Hadoop MapReduce | WordCount en Java avec Eclipse : exécution locale, puis JAR lancé sur le cluster | [[Correction TP 2 - Premier programme Hadoop MapReduce]] |
+| TP 3 — Exercices Hadoop MapReduce | anagrammes, analyse des sentiments de tweets, index web inversé | [[Correction TP 3 - Exercices Hadoop MapReduce]] |
+
+Les énoncés (PDF) sont dans **TP**, les corrections dans **Corrections**. Chaque correction commence par **comment travailler le TP** : avec la VM Cloudera de l'énoncé, ou avec Hadoop installé sur son propre PC. Elle déroule ensuite le TP pas à pas, avec le code, les résultats et les erreurs des énoncés, tous vérifiés avec Hadoop 3.4.3. Le code fourni pour l'exercice 2 du TP 3 est aussi dans **Corrections**, avec sa version corrigée.
+
 Quiz en ligne de l'enseignante : [introduction](https://takwabenaichagader.github.io/bigdata-session1-quiz/) · [HDFS](https://takwabenaichagader.github.io/bigdata-ch2-HDFS-quiz/) · [MapReduce](https://takwabenaichagader.github.io/mapreduce-part2-training/).
 
 Même UE que Virtualisation et Cloud.
