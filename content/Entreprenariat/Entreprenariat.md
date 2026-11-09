@@ -19,6 +19,6 @@ Le cours cherche à **comprendre le phénomène entrepreneurial**, autour de deu
 2. **Partie I · Chapitre I — Aperçu sur l'entrepreneuriat** : historique (Say, Schumpeter, les quatre paradigmes de Fayolle et Verstraete), enjeux socio-économiques dans le contexte tunisien, définitions, et les huit formes entrepreneuriales (ex nihilo, reprise, franchise, essaimage, intrapreneuriat, auto-entrepreneuriat, entrepreneuriat public, entrepreneuriat social)
 3. **Partie II — Le processus entrepreneurial** (support pas encore distribué) : profil de l'entrepreneur et ses motivations, la notion d'idée-opportunité, le Business Model Canvas (BMC) avec des exemples
 
-Le support de la partie I est dans **Cours**, sa fiche détaillée dans **Résumés** : [[Résumé - Chapitre 1 - Aperçu sur l'entrepreneuriat]].
+Le support de la partie I est dans **Cours**, sa fiche détaillée dans **Résumés** : [[Résumé - Chapitre 1 - Aperçu sur l'entrepreneuriat]], et sa version guide de révision (astuces mémo, pièges, fiche résumé, quiz corrigé) : [[Résumé plus max - Chapitre 1 - Aperçu sur l'entrepreneuriat]].
 
 Même UE que Environnement professionnel et Anglais 5.
