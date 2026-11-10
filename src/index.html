@@ -39,6 +39,8 @@
   <div class="wallpaper" aria-hidden="true"></div>
   <header class="bar" id="bar"></header>
   <div class="desktop">
+    <!-- The scrim lives inside .desktop (a stacking context) so the phone menu can sit above it. -->
+    <div class="scrim" aria-hidden="true"></div>
     <aside class="window sidebar" id="sidebar" aria-label="Explorateur"></aside>
     <main class="window main" id="main">
       <div class="view" id="view" tabindex="-1">
@@ -46,7 +48,6 @@
       </div>
     </main>
   </div>
-  <div class="scrim" aria-hidden="true"></div>
   <div class="launcher" id="launcher" hidden></div>
   <div id="dock"></div>
   <div class="toasts" id="toasts" aria-live="polite"></div>

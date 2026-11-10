@@ -2,7 +2,7 @@ import { vault, matieres, canvases, itemsOf, items, typeOf, cssColor, matiereEmo
 import { stats } from '../pomodoro.js';
 import { mountCanvas } from '../jcanvas.js';
 import { icon } from '../icons.js';
-import { esc, store, fmtDate } from '../util.js';
+import { esc, store, fmtDate, isMobile } from '../util.js';
 import { enhance } from '../enhance.js';
 import { notFound } from './notfound.js';
 import { collab } from '../collab.js';
@@ -31,7 +31,8 @@ export function renderMatiere(view, { params: [id], query }) {
     ...m.canvases.map((cid) => ({ id: cid, label: canvases.get(cid).auto ? 'carte' : canvases.get(cid).title, icon: 'canvas' })),
     { id: 'liste', label: 'liste', icon: 'list' },
   ];
-  let tab = query.get('tab') ?? store.get(`tab.${m.id}`, tabs[0].id);
+  // On a phone the pannable "carte" is cramped, so a first visit opens the list instead.
+  let tab = query.get('tab') ?? store.get(`tab.${m.id}`, isMobile() ? 'liste' : tabs[0].id);
   if (!tabs.some((t) => t.id === tab)) tab = tabs[0].id;
   store.set(`tab.${m.id}`, tab);
 
@@ -74,6 +75,9 @@ export function renderMatiere(view, { params: [id], query }) {
   }
 
   body.classList.add('m-scroll');
+  // Lets a phone scroll the whole page (see .mview.is-list); on a wide screen .mview still fills the view.
+  view.classList.remove('full');
+  view.querySelector('.mview').classList.add('is-list');
   body.innerHTML = `<div class="page">
     ${m.html ? `<div class="card prose intro">${m.html}</div>` : ''}
     ${vault.types.map((t) => {
